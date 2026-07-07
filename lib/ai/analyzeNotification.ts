@@ -27,6 +27,17 @@ Published: {{publishedAt}}
 Body:
 {{bodyText}}`;
 
+let geminiUnavailableForProcess = false;
+
+function isQuotaError(err: unknown): boolean {
+  const text = String(err);
+  return (
+    text.includes("RESOURCE_EXHAUSTED") ||
+    text.includes("quota") ||
+    text.includes("429")
+  );
+}
+
 /**
  * Calls Gemini to analyze a notice and returns a validated Analysis object.
  * Retries once on Zod validation failure.
@@ -39,6 +50,16 @@ export async function analyzeNotification(params: {
   bodyText: string;
 }): Promise<AnalysisResult> {
   const model = getGeminiModel();
+
+  if (geminiUnavailableForProcess) {
+    return {
+      parsed: null,
+      rawResponse: { error: "Gemini analysis skipped for this run after quota failure." },
+      model,
+      success: false,
+    };
+  }
+
   const prompt = PROMPT_TEMPLATE
     .replace("{{department}}", params.department)
     .replace("{{title}}", params.title)
@@ -85,11 +106,24 @@ export async function analyzeNotification(params: {
     return await attempt();
   } catch (firstErr) {
     logger.warn(`[analyzeNotification] First attempt failed: ${firstErr}`);
+    if (isQuotaError(firstErr)) {
+      geminiUnavailableForProcess = true;
+      return {
+        parsed: null,
+        rawResponse: { error: String(firstErr) },
+        model,
+        success: false,
+      };
+    }
+
     // Retry once
     try {
       return await attempt();
     } catch (secondErr) {
       logger.error(`[analyzeNotification] Both attempts failed: ${secondErr}`);
+      if (isQuotaError(secondErr)) {
+        geminiUnavailableForProcess = true;
+      }
       return {
         parsed: null,
         rawResponse: { error: String(secondErr) },

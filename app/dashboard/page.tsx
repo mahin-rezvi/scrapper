@@ -79,7 +79,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       : {}),
   };
 
-  const [notices, total, allDepts, recentRunLogs, stats] = await Promise.all([
+  const [notices, total, allDepts, recentRunLogs] = await Promise.all([
     prisma.notification.findMany({
       where,
       include: {
@@ -104,11 +104,12 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       orderBy: { startedAt: "desc" },
       take: 1,
     }),
-    prisma.notification.groupBy({
-      by: ["status"],
-      _count: { _all: true },
-    }),
   ]);
+
+  const stats = await prisma.notification.groupBy({
+    by: ["status"],
+    _count: { _all: true },
+  });
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
   const lastRun = recentRunLogs[0] ?? null;
@@ -272,6 +273,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 : null;
               const category = a?.category ?? null;
               const deadline = a?.deadline ?? null;
+              const summary =
+                a?.summary && a.summary !== "Analysis failed"
+                  ? a.summary
+                  : null;
               const actionItems = safeStringArray(a?.actionItems);
               const affectedGroups = safeStringArray(a?.affectedGroups);
 
@@ -315,6 +320,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                       </span>
                     )}
 
+                    <span className={`chip chip--status chip--status-${n.status}`}>
+                      {n.status}
+                    </span>
                     <span className={`status-dot status-dot--${n.status}`} title={n.status} />
                   </div>
 
@@ -332,8 +340,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
                   {/* AI summary or raw body excerpt */}
                   <p className="card-summary">
-                    {a?.summary ?? n.bodyText.slice(0, 200)}
-                    {!a?.summary && n.bodyText.length > 200 ? "…" : ""}
+                    {summary ?? n.bodyText.slice(0, 200)}
+                    {!summary && n.bodyText.length > 200 ? "…" : ""}
                   </p>
 
                   {/* Affected groups */}
@@ -706,6 +714,14 @@ body { background: var(--bg); color: var(--text); font-family: Inter, system-ui,
   color: #fb923c;
   margin-left: auto;
 }
+.chip--status {
+  text-transform: capitalize;
+  background: rgba(255,255,255,0.05);
+  color: #8b94bd;
+}
+.chip--status-processed { background: rgba(34,197,94,.12); color: #4ade80; }
+.chip--status-new { background: rgba(245,158,11,.12); color: #fbbf24; }
+.chip--status-failed { background: rgba(239,68,68,.12); color: #f87171; }
 
 .status-dot {
   width: 7px;

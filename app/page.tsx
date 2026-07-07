@@ -214,10 +214,12 @@ export default async function HomePage() {
                   </a>
                 </h3>
                 <p>
-                  {notice.analysis?.summary ??
-                    `${notice.department.name} notice published ${fmtDate(
-                      notice.publishedAt ?? notice.createdAt
-                    )}.`}
+                  {notice.analysis?.summary &&
+                  notice.analysis.summary !== "Analysis failed"
+                    ? notice.analysis.summary
+                    : `${notice.department.name} notice published ${fmtDate(
+                        notice.publishedAt ?? notice.createdAt
+                      )}.`}
                 </p>
               </article>
             ))}

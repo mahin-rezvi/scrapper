@@ -3,14 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
     "db:local": "pglite-server --db ./.local/pglite --port 5433 --host 127.0.0.1 -m 10",
-    "scrape:dry": "tsx scripts/dryRun.ts"
+    "scrape:dry": "tsx scripts/dryRun.ts",
+    "scrape:run": "tsx scripts/runPipelineOnce.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
