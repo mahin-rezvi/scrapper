@@ -41,6 +41,42 @@ The dashboard is available at `/dashboard`. The protected scraper endpoint is
 Authorization: Bearer <CRON_SECRET>
 ```
 
+## Production Deploy
+
+Set these environment variables in Vercel before publishing:
+
+- `DATABASE_URL`
+- `DIRECT_URL`
+- `GEMINI_API_KEY`
+- `GEMINI_MODEL`
+- `R2_ACCOUNT_ID`
+- `R2_ACCESS_KEY_ID`
+- `R2_SECRET_ACCESS_KEY`
+- `R2_BUCKET_NAME`
+- `R2_PUBLIC_URL_BASE`
+- `CRON_SECRET`
+- `SCRAPER_USER_AGENT`
+- `PIPELINE_MAX_NEW_PER_DEPARTMENT`
+- `PIPELINE_INTER_REQUEST_DELAY_MS`
+
+Then apply the existing migration and seed departments against the production
+database:
+
+```bash
+npx prisma migrate deploy
+npm run db:seed
+```
+
+Run one real scrape to populate the dashboard:
+
+```bash
+npm run scrape:run
+```
+
+`PIPELINE_MAX_NEW_PER_DEPARTMENT` defaults to `2` so cron runs stay short on
+hosted/serverless deployments. Increase it later if your plan allows longer
+background execution.
+
 ## Scraper Dry Run
 
 Use the dry-run command before changing parser selectors:
@@ -79,3 +115,14 @@ https://webbackend.daffodilvarsity.edu.bd/department/{code}/notice-detail/{id}
 
 For checks more frequent than once per day on Vercel Hobby, use a GitHub Actions
 scheduled workflow that calls `/api/cron/scrape` with the same bearer token.
+
+The included GitHub Actions workflow needs these repository secrets:
+
+- `DEPLOY_URL` - your public deployment URL, for example
+  `https://your-project.vercel.app`
+- `CRON_SECRET` - the same value configured in Vercel
+
+The dashboard also has an Admin scrape control. Paste `CRON_SECRET` there to
+trigger the protected scraper endpoint manually; the value is kept only in your
+browser session storage.
+# scrapper
