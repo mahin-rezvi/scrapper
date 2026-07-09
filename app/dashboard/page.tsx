@@ -261,8 +261,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
             <div id="empty-icon">📭</div>
             <p id="empty-message">No notices found</p>
             <p id="empty-hint">
-              Run the scraper from the Admin scrape control above, or make sure
-              your database migration has run before the scheduled cron starts.
+              Make sure your database migration has run and wait for the scheduled
+              cron to populate notices automatically.
             </p>
           </div>
         ) : (
@@ -728,8 +728,7 @@ body { background: var(--bg); color: var(--text); font-family: Inter, system-ui,
   outline: 2px solid rgba(129,140,248,0.65);
   outline-offset: 3px;
 }
-#refresh-panel,
-#scrape-panel {
+#refresh-panel {
   min-height: 64px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -748,8 +747,7 @@ body { background: var(--bg); color: var(--text); font-family: Inter, system-ui,
   box-shadow: 0 0 0 6px rgba(34,197,94,0.08), 0 0 16px rgba(34,197,94,.45);
   flex-shrink: 0;
 }
-#refresh-title,
-#scrape-panel label {
+#refresh-title {
   font-size: 0.78rem;
   font-weight: 700;
   color: #c6cbeb;
@@ -759,18 +757,20 @@ body { background: var(--bg); color: var(--text); font-family: Inter, system-ui,
   font-size: 0.74rem;
   color: var(--muted);
 }
-#scrape-panel input {
-  width: 170px;
-  border: 1px solid var(--border);
+#control-button {
+  border: 1px solid var(--border-h);
   border-radius: 7px;
-  background: #080a14;
-  color: #d8daf0;
-  font-size: 0.78rem;
-  padding: 0.48rem 0.6rem;
-  outline: none;
+  background: var(--accent-b);
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 0.48rem 0.75rem;
+  cursor: pointer;
+  transition: background 0.13s, border-color 0.13s;
+  white-space: nowrap;
 }
-#scrape-panel input:focus { border-color: var(--border-h); }
-.control-button {
+.control-button:hover:not(:disabled) { background: rgba(129,140,248,0.2); }
+.control-button:disabled {
   border: 1px solid var(--border-h);
   border-radius: 7px;
   background: var(--accent-b);
@@ -998,7 +998,5 @@ body { background: var(--bg); color: var(--text); font-family: Inter, system-ui,
   #card-grid { grid-template-columns: 1fr; }
   #topbar { flex-direction: column; }
   #dashboard-controls { grid-template-columns: 1fr; }
-  #scrape-panel { flex-wrap: wrap; }
-  #scrape-panel input { flex: 1; min-width: 160px; }
 }
 `;

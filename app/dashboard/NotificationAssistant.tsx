@@ -80,13 +80,19 @@ export function NotificationAssistant({ department }: NotificationAssistantProps
 
           <form id="assistant-form" onSubmit={handleSubmit}>
             <textarea
-              id="assistant-query"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="e.g. What are the upcoming exam deadlines?"
-              rows={4}
-              disabled={isPending}
-            />
+                id="assistant-query"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    event.currentTarget.form?.requestSubmit();
+                  }
+                }}
+                placeholder="e.g. What are the upcoming exam deadlines?"
+                rows={4}
+                disabled={isPending}
+              />
 
             <div id="assistant-actions">
               <button type="submit" className="control-button" disabled={isPending}>

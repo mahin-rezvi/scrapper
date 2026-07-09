@@ -75,7 +75,7 @@ export async function replyToUser(params: UserReplyParams): Promise<UserReplyRes
     ].join("\n");
   });
 
-  const prompt = `You are an assistant for the Daffodil International University Notice Tracker. The user will ask a question about recent notices. Answer based only on the information from the notice summaries below. If you do not have enough information in the provided notices, say that you cannot answer from the latest notices.
+  const prompt = `You are an assistant for the Daffodil International University Notice Tracker. The user will ask a question about recent notices. Answer based only on the information from the notice summaries below. If you do not have enough information in the provided notices, say that you cannot answer from the latest notices or search to the "https://daffodilvarsity.edu.bd/department/[departmentname]/notice" wherre the [departmentname] refers to the name of the department the user will provide in his prompt.
 
 ${contextLines.join("\n\n")}
 

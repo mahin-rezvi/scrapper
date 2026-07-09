@@ -122,7 +122,4 @@ The included GitHub Actions workflow needs these repository secrets:
   `https://your-project.vercel.app`
 - `CRON_SECRET` - the same value configured in Vercel
 
-The dashboard also has an Admin scrape control. Paste `CRON_SECRET` there to
-trigger the protected scraper endpoint manually; the value is kept only in your
-browser session storage.
 # scrapper

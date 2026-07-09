@@ -190,8 +190,8 @@ export default async function HomePage() {
           <div id="empty-home">
             <h3>No notices yet</h3>
             <p>
-              Use the dashboard admin scrape control after migrations are
-              deployed. The scheduled cron will keep it updated after that.
+              The scheduled cron will keep the notice tracker updated after
+              deployment.
             </p>
           </div>
         ) : (
