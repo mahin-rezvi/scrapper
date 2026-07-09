@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db/prisma";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { DashboardControls } from "./DashboardControls";
+import { NotificationAssistant } from "./NotificationAssistant";
 
 export const metadata: Metadata = {
   title: "DIU Notice Tracker — Dashboard",
@@ -252,6 +253,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         </header>
 
         <DashboardControls lastRunLabel={lastRunLabel} />
+        <NotificationAssistant department={selectedDept || undefined} />
 
         {/* Notice grid */}
         {notices.length === 0 ? (
@@ -319,11 +321,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                         ⏰ {deadline}
                       </span>
                     )}
-
-                    <span className={`chip chip--status chip--status-${n.status}`}>
-                      {n.status}
-                    </span>
-                    <span className={`status-dot status-dot--${n.status}`} title={n.status} />
                   </div>
 
                   {/* Title */}
@@ -583,6 +580,120 @@ body { background: var(--bg); color: var(--text); font-family: Inter, system-ui,
   grid-template-columns: minmax(260px, 1fr) minmax(320px, auto);
   gap: 0.8rem;
   align-items: stretch;
+}
+#assistant-panel {
+  min-height: 240px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.02);
+  padding: 1rem;
+  display: grid;
+  gap: 1rem;
+}
+#assistant-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+#assistant-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #d8daf0;
+}
+#assistant-copy {
+  margin-top: 0.35rem;
+  color: #8f9bcb;
+  font-size: 0.78rem;
+}
+#assistant-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-align: right;
+  font-size: 0.72rem;
+  color: #6b78a1;
+}
+#assistant-form {
+  display: grid;
+  gap: 0.75rem;
+}
+#assistant-query {
+  width: 100%;
+  min-height: 104px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  background: #090b16;
+  color: #eef2ff;
+  padding: 0.95rem 1rem;
+  font-size: 0.9rem;
+  resize: vertical;
+}
+#assistant-query:focus {
+  outline: 2px solid rgba(129,140,248,0.3);
+  border-color: rgba(129,140,248,0.4);
+}
+#assistant-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+#assistant-error {
+  color: #fca5a5;
+  font-size: 0.82rem;
+}
+#assistant-response {
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-top: 1rem;
+  display: grid;
+  gap: 0.75rem;
+}
+#assistant-response-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+#assistant-response-header h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+#assistant-response p {
+  color: #cbd5ff;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+#assistant-response-notices {
+  display: grid;
+  gap: 0.55rem;
+}
+#assistant-response-notices h4 {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #9ca3af;
+}
+#assistant-response-notices ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+#assistant-response-notices li {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.8rem 0.95rem;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+#assistant-response-notices strong {
+  display: block;
+  font-size: 0.85rem;
+  color: #e2e8f0;
+}
+#assistant-response-notices span {
+  font-size: 0.75rem;
+  color: #8f9bb7;
 }
 #refresh-panel,
 #scrape-panel {
