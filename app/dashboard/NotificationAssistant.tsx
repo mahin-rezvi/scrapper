@@ -15,6 +15,7 @@ interface ReplyResult {
 }
 
 export function NotificationAssistant({ department }: NotificationAssistantProps) {
+  const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [result, setResult] = useState<ReplyResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -57,61 +58,78 @@ export function NotificationAssistant({ department }: NotificationAssistantProps
   }
 
   return (
-    <section id="assistant-panel" aria-label="Notice assistant">
-      <div id="assistant-header">
-        <div>
-          <p id="assistant-label">Ask the notice assistant</p>
-          <p id="assistant-copy">
-            Ask about recent processed notices{department ? ` in ${department.toUpperCase()}` : ""}.
-          </p>
-        </div>
-        <div id="assistant-meta">
-          <span>AI assistant</span>
-          <span>{department ? department.toUpperCase() : "All departments"}</span>
-        </div>
-      </div>
-
-      <form id="assistant-form" onSubmit={handleSubmit}>
-        <textarea
-          id="assistant-query"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="e.g. What are the upcoming exam deadlines?"
-          rows={4}
-          disabled={isPending}
-        />
-
-        <div id="assistant-actions">
-          <button type="submit" className="control-button" disabled={isPending}>
-            {isPending ? "Asking…" : "Ask assistant"}
-          </button>
-        </div>
-      </form>
-
-      {error && <p id="assistant-error">{error}</p>}
-
-      {result && (
-        <div id="assistant-response">
-          <div id="assistant-response-header">
-            <h3>Assistant answer</h3>
-            <span>Model: {result.model}</span>
+    <div id="assistant-float">
+      {open && (
+        <section id="assistant-panel" aria-label="Notice assistant">
+          <div id="assistant-header">
+            <div>
+              <p id="assistant-label">Ask the notice assistant</p>
+              <p id="assistant-copy">
+                Ask about recent processed notices{department ? ` in ${department.toUpperCase()}` : ""}.
+              </p>
+            </div>
+            <button
+              type="button"
+              id="assistant-close"
+              onClick={() => setOpen(false)}
+              aria-label="Close assistant panel"
+            >
+              ✕
+            </button>
           </div>
-          <p>{result.answer}</p>
-          <div id="assistant-response-notices">
-            <h4>Notices used</h4>
-            <ul>
-              {result.notices.map((notice) => (
-                <li key={notice.id}>
-                  <strong>{notice.title}</strong>
-                  <span>
-                    {notice.departmentCode.toUpperCase()} · {notice.category ?? "uncategorized"} · {notice.priority ?? "unknown"}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
+
+          <form id="assistant-form" onSubmit={handleSubmit}>
+            <textarea
+              id="assistant-query"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="e.g. What are the upcoming exam deadlines?"
+              rows={4}
+              disabled={isPending}
+            />
+
+            <div id="assistant-actions">
+              <button type="submit" className="control-button" disabled={isPending}>
+                {isPending ? "Asking…" : "Ask assistant"}
+              </button>
+            </div>
+          </form>
+
+          {error && <p id="assistant-error">{error}</p>}
+
+          {result && (
+            <div id="assistant-response">
+              <div id="assistant-response-header">
+                <h3>Assistant answer</h3>
+                <span>Model: {result.model}</span>
+              </div>
+              <p>{result.answer}</p>
+              <div id="assistant-response-notices">
+                <h4>Notices used</h4>
+                <ul>
+                  {result.notices.map((notice) => (
+                    <li key={notice.id}>
+                      <strong>{notice.title}</strong>
+                      <span>
+                        {notice.departmentCode.toUpperCase()} · {notice.category ?? "uncategorized"} · {notice.priority ?? "unknown"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+        </section>
       )}
-    </section>
+
+      <button
+        type="button"
+        id="assistant-toggle"
+        onClick={() => setOpen((prev) => !prev)}
+        aria-expanded={open}
+      >
+        {open ? "Close assistant" : "Ask notice assistant"}
+      </button>
+    </div>
   );
 }

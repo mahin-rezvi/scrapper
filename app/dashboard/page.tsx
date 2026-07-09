@@ -154,7 +154,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       <aside id="sidebar">
         <div id="sidebar-brand">
           <span id="brand-icon">🔔</span>
-          <span id="brand-name">DIU Notices</span>
+          <span id="brand-name"><Link href="/">DIU Notices</Link></span>
         </div>
 
         <nav id="sidebar-nav">
@@ -581,14 +581,27 @@ body { background: var(--bg); color: var(--text); font-family: Inter, system-ui,
   gap: 0.8rem;
   align-items: stretch;
 }
+#assistant-float {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+  z-index: 1000;
+}
 #assistant-panel {
-  min-height: 240px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: rgba(255,255,255,0.02);
+  width: min(420px, calc(100vw - 2rem));
+  max-height: min(80vh, 760px);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 18px;
+  background: rgba(5,8,21,0.96);
   padding: 1rem;
   display: grid;
   gap: 1rem;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(16px);
 }
 #assistant-header {
   display: flex;
@@ -597,22 +610,22 @@ body { background: var(--bg); color: var(--text); font-family: Inter, system-ui,
   align-items: flex-start;
 }
 #assistant-label {
-  font-size: 0.82rem;
+  font-size: 0.92rem;
   font-weight: 700;
-  color: #d8daf0;
+  color: #eef2ff;
 }
 #assistant-copy {
   margin-top: 0.35rem;
-  color: #8f9bcb;
+  color: #9ca3af;
   font-size: 0.78rem;
 }
-#assistant-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  text-align: right;
-  font-size: 0.72rem;
-  color: #6b78a1;
+#assistant-close {
+  border: none;
+  background: transparent;
+  color: #d8daf0;
+  font-size: 1.05rem;
+  cursor: pointer;
+  padding: 0.25rem;
 }
 #assistant-form {
   display: grid;
@@ -621,31 +634,33 @@ body { background: var(--bg); color: var(--text); font-family: Inter, system-ui,
 #assistant-query {
   width: 100%;
   min-height: 104px;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px;
-  background: #090b16;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px;
+  background: rgba(10,12,24,0.98);
   color: #eef2ff;
-  padding: 0.95rem 1rem;
-  font-size: 0.9rem;
+  padding: 1rem;
+  font-size: 0.92rem;
   resize: vertical;
 }
 #assistant-query:focus {
-  outline: 2px solid rgba(129,140,248,0.3);
-  border-color: rgba(129,140,248,0.4);
+  outline: 2px solid rgba(129,140,248,0.35);
+  border-color: rgba(129,140,248,0.6);
 }
 #assistant-actions {
   display: flex;
   justify-content: flex-end;
 }
 #assistant-error {
-  color: #fca5a5;
+  color: #fecaca;
   font-size: 0.82rem;
 }
 #assistant-response {
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid rgba(255,255,255,0.08);
   padding-top: 1rem;
   display: grid;
   gap: 0.75rem;
+  max-height: 38vh;
+  overflow: auto;
 }
 #assistant-response-header {
   display: flex;
@@ -658,7 +673,7 @@ body { background: var(--bg); color: var(--text); font-family: Inter, system-ui,
   font-size: 0.95rem;
 }
 #assistant-response p {
-  color: #cbd5ff;
+  color: #d8dde6;
   line-height: 1.7;
   white-space: pre-wrap;
 }
@@ -682,18 +697,36 @@ body { background: var(--bg); color: var(--text); font-family: Inter, system-ui,
   display: grid;
   gap: 0.25rem;
   padding: 0.8rem 0.95rem;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.025);
-  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
 }
 #assistant-response-notices strong {
   display: block;
   font-size: 0.85rem;
-  color: #e2e8f0;
+  color: #eef2ff;
 }
 #assistant-response-notices span {
   font-size: 0.75rem;
   color: #8f9bb7;
+}
+#assistant-toggle {
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #6366f1, #818cf8);
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.95rem 1.15rem;
+  cursor: pointer;
+  box-shadow: 0 16px 30px rgba(99,102,241,0.25);
+}
+#assistant-toggle:hover {
+  transform: translateY(-1px);
+}
+#assistant-toggle:focus-visible {
+  outline: 2px solid rgba(129,140,248,0.65);
+  outline-offset: 3px;
 }
 #refresh-panel,
 #scrape-panel {
