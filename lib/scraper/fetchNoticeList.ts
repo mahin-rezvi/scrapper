@@ -12,26 +12,19 @@ export interface NoticeListItem {
 }
 
 const TIMEOUT_MS = 10_000;
+const MAX_NOTICE_LIST_PAGES = Number.parseInt(
+  process.env.SCRAPER_MAX_NOTICE_LIST_PAGES ?? "20",
+  10
+);
 
-/**
- * Fetch and parse the notice list page for a given department code.
- * Returns an array of {sourceId, title, detailUrl, publishedDate, category}.
- *
- * HTML structure confirmed by live inspection (2026-07-07):
- * - Each notice: div.blog-entry
- * - Title link: h3.heading > a  (href = .../notice-detail/{id})
- * - Category: first div.col-md-2 inside the notice row
- * - Date: div.col-md-2 containing the calendar icon + date string
- */
-export async function fetchNoticeList(
-  code: string
-): Promise<NoticeListItem[]> {
-  const url = noticeListUrl(code);
+function buildNoticeListUrl(code: string, page: number): string {
+  return noticeListUrl(code, page);
+}
 
-  const html = await withRetry(
+async function fetchPageHtml(url: string): Promise<string> {
+  return withRetry(
     async () => {
-      const userAgent =
-        process.env.SCRAPER_USER_AGENT ?? "NoticeTrackerBot/1.0";
+      const userAgent = process.env.SCRAPER_USER_AGENT ?? "NoticeTrackerBot/1.0";
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
       try {
@@ -50,8 +43,9 @@ export async function fetchNoticeList(
     2,
     1000
   );
+}
 
-  const $ = cheerio.load(html);
+function parseNoticeItems($: cheerio.Root | cheerio.CheerioAPI): NoticeListItem[] {
   const items: NoticeListItem[] = [];
 
   $("div.blog-entry").each((_i, el) => {
@@ -61,7 +55,6 @@ export async function fetchNoticeList(
 
     if (!href || !title) return;
 
-    // Extract numeric ID from URL: .../notice-detail/3754
     const idMatch = href.match(/notice-detail\/(\d+)/);
     if (!idMatch) return;
     const sourceId = parseInt(idMatch[1], 10);
@@ -74,23 +67,23 @@ export async function fetchNoticeList(
       const $col = $(col);
       const text = $col.text().replace(/\s+/g, " ").trim();
       if ($col.find("i.fa-calendar-alt, i.fa-calendar").length > 0) {
-        // This column contains the calendar icon — it's the date column
         publishedDate = text;
       } else if (
         $col.find("i.fa-edit, i.fa-building, i.fa-info, i.fa-tag").length > 0
       ) {
-        // This column has a category/type icon
         category = text || undefined;
       }
     });
 
-    // Fallback: if category still unset, try the first col-md-2 that isn't the date
     if (!category) {
       cols.each((_j, col) => {
         const $col = $(col);
         if ($col.find("i.fa-calendar-alt, i.fa-calendar").length === 0) {
           const text = $col.text().replace(/\s+/g, " ").trim();
-          if (text) { category = text; return false; } // break
+          if (text) {
+            category = text;
+            return false;
+          }
         }
       });
     }
@@ -102,6 +95,50 @@ export async function fetchNoticeList(
     items.push({ sourceId, title, detailUrl, publishedDate, category });
   });
 
-  logger.info(`[fetchNoticeList] ${code}: found ${items.length} notices`);
+  return items;
+}
+
+export async function fetchNoticeList(
+  code: string
+): Promise<NoticeListItem[]> {
+  const seenIds = new Set<number>();
+  const items: NoticeListItem[] = [];
+
+  for (let page = 1; page <= MAX_NOTICE_LIST_PAGES; page += 1) {
+    const url = buildNoticeListUrl(code, page);
+    const html = await fetchPageHtml(url);
+    const $ = cheerio.load(html);
+    const pageItems = parseNoticeItems($);
+
+    if (pageItems.length === 0) {
+      logger.info(`[fetchNoticeList] ${code}: no notices found on page ${page}, stopping pagination`);
+      break;
+    }
+
+    const newPageItems = pageItems.filter((item) => {
+      if (seenIds.has(item.sourceId)) {
+        logger.warn(
+          `[fetchNoticeList] ${code}: duplicate sourceId ${item.sourceId} skipped on page ${page}`
+        );
+        return false;
+      }
+      seenIds.add(item.sourceId);
+      return true;
+    });
+
+    if (newPageItems.length === 0) {
+      logger.info(`[fetchNoticeList] ${code}: all ${pageItems.length} notices on page ${page} were duplicates, stopping pagination`);
+      break;
+    }
+
+    items.push(...newPageItems);
+    logger.info(`[fetchNoticeList] ${code}: page ${page} returned ${newPageItems.length} new notices`);
+
+    if (pageItems.length < 20) {
+      break;
+    }
+  }
+
+  logger.info(`[fetchNoticeList] ${code}: found ${items.length} notices across department pages`);
   return items;
 }

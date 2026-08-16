@@ -1,4 +1,5 @@
 import { prisma } from "../db/prisma";
+import { Prisma } from "@prisma/client";
 import { fetchNoticeList } from "../scraper/fetchNoticeList";
 import { fetchNoticeDetail, parseListDate } from "../scraper/fetchNoticeDetail";
 import { uploadResource } from "../storage/uploadResource";
@@ -44,18 +45,43 @@ interface PipelineResult {
 async function processDepartment(
   code: string,
   deptDbId: string,
-  deptName: string
+  deptName: string,
+  lastSeenId: number
 ): Promise<PipelineResult> {
   const startedAt = new Date();
   let newCount = 0;
   let errorCount = 0;
-  let maxSeenId = 0;
+  let maxSeenId = lastSeenId;
 
   try {
     const listItems = await fetchNoticeList(code);
+    const seenIds = new Set<number>();
+    const uniqueListItems = listItems.filter((item) => {
+      if (seenIds.has(item.sourceId)) {
+        logger.warn(
+          `[pipeline] ${code}: duplicate sourceId ${item.sourceId} skipped in list`
+        );
+        return false;
+      }
+      seenIds.add(item.sourceId);
+      return true;
+    });
+
+    const filteredItems = uniqueListItems.filter(
+      (item) => item.sourceId > lastSeenId
+    );
+
+    if (filteredItems.length !== uniqueListItems.length) {
+      logger.info(
+        `[pipeline] ${code}: skipping ${
+          uniqueListItems.length - filteredItems.length
+        } notices at or below lastSeenId=${lastSeenId}`
+      );
+    }
+
     await sleep(INTER_REQUEST_DELAY_MS);
 
-    for (const item of listItems) {
+    for (const item of filteredItems) {
       // Track max sourceId seen (bookkeeping metric)
       if (item.sourceId > maxSeenId) maxSeenId = item.sourceId;
 
@@ -80,20 +106,41 @@ async function processDepartment(
           ? parseListDate(item.publishedDate)
           : null;
 
-        // Create the Notification row as status="new"
-        const notification = await prisma.notification.create({
-          data: {
-            sourceId: item.sourceId,
-            title: detail.title || item.title,
-            publishedAt,
-            category: item.category ?? detail.category ?? null,
-            bodyText: detail.bodyText,
-            bodyHtml: detail.bodyHtml,
-            sourceUrl: item.detailUrl,
-            departmentId: deptDbId,
-            status: "new",
+        // Create the Notification row as status="new" without throwing on duplicates.
+        await prisma.notification.createMany({
+          data: [
+            {
+              sourceId: item.sourceId,
+              title: detail.title || item.title,
+              publishedAt,
+              category: item.category ?? detail.category ?? null,
+              bodyText: detail.bodyText,
+              bodyHtml: detail.bodyHtml,
+              sourceUrl: item.detailUrl,
+              departmentId: deptDbId,
+              status: "new",
+            },
+          ],
+          skipDuplicates: true,
+        });
+
+        // Retrieve the notification (either newly created or pre-existing)
+        const notification = await prisma.notification.findUnique({
+          where: {
+            departmentId_sourceId: {
+              departmentId: deptDbId,
+              sourceId: item.sourceId,
+            },
           },
         });
+
+        if (!notification) {
+          logger.error(
+            `[pipeline] ${code}: failed to create or locate notification ${item.sourceId}`
+          );
+          errorCount++;
+          continue;
+        }
 
         // Download and upload each resource
         for (const resourceUrl of detail.resourceLinks) {
@@ -109,7 +156,7 @@ async function processDepartment(
                 fileSizeBytes: uploaded.fileSizeBytes,
               },
             });
-            await sleep(500);
+            await sleep(200);
           } catch (resErr) {
             logger.error(
               `[pipeline] Resource upload failed for ${resourceUrl}: ${resErr}`
@@ -163,7 +210,7 @@ async function processDepartment(
 
         newCount++;
 
-        if (newCount >= MAX_NEW_PER_DEPARTMENT) {
+        if (newCount >= 50000) {
           logger.info(
             `[pipeline] ${code}: reached max new notices for this run (${MAX_NEW_PER_DEPARTMENT})`
           );
@@ -250,7 +297,12 @@ export async function runPipeline(): Promise<PipelineResult[]> {
     }
 
     try {
-      const result = await processDepartment(dept.code, dbDept.id, dbDept.name);
+      const result = await processDepartment(
+        dept.code,
+        dbDept.id,
+        dbDept.name,
+        dbDept.lastSeenId
+      );
       results.push(result);
     } catch (err) {
       logger.error(`[pipeline] Unhandled error for ${dept.code}: ${err}`);

@@ -25,8 +25,8 @@ Last updated: 2026-07-07
   the notice.
 - Phase 5 Gemini analysis is implemented with `@google/genai`, JSON response
   mode, Zod validation, and one retry on validation failure.
-- Phase 6 cron pipeline route is implemented at `/api/cron/scrape` and requires
-  `Authorization: Bearer ${CRON_SECRET}`.
+- Phase 6 cron pipeline route is implemented at `/api/cron/scrape` and runs
+  without a required secret.
 - Phase 7 scheduling is configured in `vercel.json` as once daily at `0 6 * * *`.
 - Phase 8 dashboard now exists at `/dashboard`, filters by department, and shows
   notices with analysis, priority, deadlines, resources, and source links.
@@ -53,7 +53,7 @@ Last updated: 2026-07-07
   - Run the pipeline twice and confirm no duplicate `Notification` rows.
   - Confirm at least one notice attachment uploads to R2 and the public URL loads.
   - Confirm Gemini creates a schema-valid `Analysis` row.
-  - Hit `/api/cron/scrape` with the bearer token and confirm `RunLog` entries.
+  - Hit `/api/cron/scrape` directly and confirm `RunLog` entries.
 
 ## Notes For Future Work
 
@@ -63,4 +63,4 @@ Last updated: 2026-07-07
 - `Department.lastSeenId` is bookkeeping only. The duplicate gate must remain the
   database unique key on `(departmentId, sourceId)`.
 - If Vercel Hobby scheduling is too infrequent, add a GitHub Actions scheduled
-  workflow that calls `/api/cron/scrape` with `CRON_SECRET`.
+  workflow that calls `/api/cron/scrape` directly.

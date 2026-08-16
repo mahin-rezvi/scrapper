@@ -19,7 +19,7 @@ npm install
 cp .env.example .env.local
 ```
 
-3. Fill `.env.local` with Neon/Postgres, Gemini, R2, and cron secret values.
+3. Fill `.env.local` with Neon/Postgres, Gemini, and R2 values.
 
 4. Run migrations and seed departments:
 
@@ -34,12 +34,8 @@ npm run db:seed
 npm run dev
 ```
 
-The dashboard is available at `/dashboard`. The protected scraper endpoint is
-`/api/cron/scrape` and requires:
-
-```text
-Authorization: Bearer <CRON_SECRET>
-```
+The dashboard is available at `/dashboard`. The scraper endpoint is public at
+`/api/cron/scrape` and can be triggered directly by cron or a manual request.
 
 ## Production Deploy
 
@@ -54,7 +50,6 @@ Set these environment variables in Vercel before publishing:
 - `R2_SECRET_ACCESS_KEY`
 - `R2_BUCKET_NAME`
 - `R2_PUBLIC_URL_BASE`
-- `CRON_SECRET`
 - `SCRAPER_USER_AGENT`
 - `PIPELINE_MAX_NEW_PER_DEPARTMENT`
 - `PIPELINE_INTER_REQUEST_DELAY_MS`
@@ -114,12 +109,11 @@ https://webbackend.daffodilvarsity.edu.bd/department/{code}/notice-detail/{id}
 ```
 
 For checks more frequent than once per day on Vercel Hobby, use a GitHub Actions
-scheduled workflow that calls `/api/cron/scrape` with the same bearer token.
+scheduled workflow that calls `/api/cron/scrape` directly.
 
-The included GitHub Actions workflow needs these repository secrets:
+The included GitHub Actions workflow needs this repository secret:
 
 - `DEPLOY_URL` - your public deployment URL, for example
   `https://your-project.vercel.app`
-- `CRON_SECRET` - the same value configured in Vercel
 
 # scrapper

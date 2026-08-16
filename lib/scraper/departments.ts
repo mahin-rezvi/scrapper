@@ -10,6 +10,7 @@ export interface DepartmentConfig {
 
 export const DEPARTMENTS: DepartmentConfig[] = [
   { code: "eee", name: "Electrical & Electronic Engineering" },
+  { code: "cse", name: "Computer Science & Engineering" },
   { code: "cis", name: "Computer & Information Science" },
   { code: "english", name: "English" },
   { code: "itm", name: "Innovation & Technology Management" },
@@ -22,8 +23,12 @@ export const DEPARTMENTS: DepartmentConfig[] = [
 
 export const BASE_URL = "https://webbackend.daffodilvarsity.edu.bd";
 
-export function noticeListUrl(code: string): string {
-  return `${BASE_URL}/department/${code}/notice`;
+export function noticeListUrl(code: string, page?: number): string {
+  const url = new URL(`${BASE_URL}/department/${code}/notice`);
+  if (page && page > 1) {
+    url.searchParams.set("page", String(page));
+  }
+  return url.toString();
 }
 
 export function noticeDetailUrl(code: string, id: number): string {
