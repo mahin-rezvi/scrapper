@@ -1,13 +1,13 @@
-import { prisma } from "../db/prisma";
+import { prisma } from "../lib/db/prisma";
 import { Prisma } from "@prisma/client";
-import { fetchNoticeList } from "../scraper/fetchNoticeList";
-import { fetchNoticeDetail, parseListDate } from "../scraper/fetchNoticeDetail";
-import { uploadResource } from "../storage/uploadResource";
-import { analyzeNotification } from "../ai/analyzeNotification";
-import { sleep } from "../utils/rateLimit";
-import { logger } from "../utils/logger";
-import { DEPARTMENTS } from "../scraper/departments";
-import { ensureDepartments } from "../db/ensureDepartments";
+import { fetchNoticeList } from "../lib/scraper/fetchNoticeList";
+import { fetchNoticeDetail, parseListDate } from "../lib/scraper/fetchNoticeDetail";
+import { uploadResource } from "../lib/storage/uploadResource";
+import { analyzeNotification } from "../lib/ai/analyzeNotification";
+import { sleep } from "../lib/utils/rateLimit";
+import { logger } from "../lib/utils/logger";
+import { DEPARTMENTS } from "../lib/scraper/departments";
+import { ensureDepartments } from "../lib/db/ensureDepartments";
 
 function positiveIntFromEnv(key: string, fallback: number): number {
   const raw = process.env[key];

@@ -21,7 +21,7 @@ interface PageProps {
   }>;
 }
 
-const PAGE_SIZE = 100000;
+const PAGE_SIZE = 50;
 
 const PRIORITY_META: Record<
   string,

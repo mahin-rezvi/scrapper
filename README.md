@@ -41,8 +41,7 @@ The dashboard is available at `/dashboard`. The scraper endpoint is public at
 
 Set these environment variables in Vercel before publishing:
 
-- `DATABASE_URL`
-- `DIRECT_URL`
+- `NEON_DATABASE_URL`
 - `GEMINI_API_KEY`
 - `GEMINI_MODEL`
 - `R2_ACCOUNT_ID`
