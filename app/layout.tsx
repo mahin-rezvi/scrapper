@@ -10,9 +10,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "DIU Notice Tracker",
+  title: "DIUBoard — Notices and class routines",
   description:
-    "Track and analyze official notices from Daffodil International University departments",
+    "Find Daffodil International University department notices and class routines in one place.",
 };
 
 // Runs before hydration — sets data-theme immediately so there's no flash
@@ -40,16 +40,21 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     if (themeCookie === "dark" || themeCookie === "light") {
       ssrTheme = themeCookie;
     }
-  } catch (e) {
+  } catch {
     // ignore and fall back to client-side init
   }
 
   return (
-    <html lang="en" className={inter.variable} data-theme={ssrTheme}>
+    <html
+      lang="en"
+      className={inter.variable}
+      data-theme={ssrTheme || "dark"}
+      data-scroll-behavior="smooth"
+      suppressHydrationWarning
+    >
       <head>
         <script
           dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
-          // eslint-disable-next-line react/no-danger
         />
       </head>
       <body>{children}</body>

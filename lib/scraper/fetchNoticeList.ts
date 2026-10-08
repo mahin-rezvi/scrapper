@@ -13,7 +13,7 @@ export interface NoticeListItem {
 
 const TIMEOUT_MS = 10_000;
 const MAX_NOTICE_LIST_PAGES = Number.parseInt(
-  process.env.SCRAPER_MAX_NOTICE_LIST_PAGES ?? "20",
+  process.env.SCRAPER_MAX_NOTICE_LIST_PAGES ?? "100",
   10
 );
 
@@ -88,9 +88,7 @@ function parseNoticeItems($: cheerio.Root | cheerio.CheerioAPI): NoticeListItem[
       });
     }
 
-    const detailUrl = href.startsWith("http")
-      ? href
-      : `${BASE_URL}${href}`;
+    const detailUrl = new URL(href, BASE_URL).toString();
 
     items.push({ sourceId, title, detailUrl, publishedDate, category });
   });
@@ -99,12 +97,18 @@ function parseNoticeItems($: cheerio.Root | cheerio.CheerioAPI): NoticeListItem[
 }
 
 export async function fetchNoticeList(
-  code: string
+  code: string,
+  options: {
+    knownSourceIds?: ReadonlySet<number>;
+    stopAtKnownPage?: boolean;
+    maxPages?: number;
+  } = {}
 ): Promise<NoticeListItem[]> {
   const seenIds = new Set<number>();
   const items: NoticeListItem[] = [];
 
-  for (let page = 1; page <= MAX_NOTICE_LIST_PAGES; page += 1) {
+  const maxPages = Math.max(1, Math.min(options.maxPages ?? MAX_NOTICE_LIST_PAGES, MAX_NOTICE_LIST_PAGES));
+  for (let page = 1; page <= maxPages; page += 1) {
     const url = buildNoticeListUrl(code, page);
     const html = await fetchPageHtml(url);
     const $ = cheerio.load(html);
@@ -112,6 +116,16 @@ export async function fetchNoticeList(
 
     if (pageItems.length === 0) {
       logger.info(`[fetchNoticeList] ${code}: no notices found on page ${page}, stopping pagination`);
+      break;
+    }
+
+    if (
+      options.stopAtKnownPage &&
+      options.knownSourceIds &&
+      pageItems.every((item) => options.knownSourceIds?.has(item.sourceId))
+    ) {
+      items.push(...pageItems);
+      logger.info(`[fetchNoticeList] ${code}: reached an already-synced page ${page}, stopping incremental scan`);
       break;
     }
 

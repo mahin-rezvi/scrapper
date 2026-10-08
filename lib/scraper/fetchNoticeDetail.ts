@@ -80,7 +80,7 @@ export async function fetchNoticeDetail(
     .each((_i, el) => {
       const href = $(el).attr("href")?.trim();
       if (!href) return;
-      const fullUrl = href.startsWith("http") ? href : `${BASE_URL}${href}`;
+      const fullUrl = new URL(href, BASE_URL).toString();
       if (!resourceLinks.includes(fullUrl)) {
         resourceLinks.push(fullUrl);
       }

@@ -1,0 +1,30 @@
+name: Sync DIU notices and routines
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      DIU_DATABASE_URL: ${{ secrets.DIU_DATABASE_URL }}
+      DIU_DATABASE_URL_UNPOOLED: ${{ secrets.DIU_DATABASE_URL_UNPOOLED }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+      GEMINI_ROUTINE_MODEL: ${{ vars.GEMINI_ROUTINE_MODEL }}
+      SCRAPER_USER_AGENT: "DIUBoardBot/1.0 (scheduled notice and routine sync)"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run db:migrate
+      - run: npm run sync:run

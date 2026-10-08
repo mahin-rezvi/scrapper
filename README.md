@@ -1,118 +1,76 @@
-# DIU Notice Tracker
+# DIUBoard
 
-Next.js app for scraping Daffodil International University notices from the
-server-rendered backend, storing new notices in Postgres, uploading attachments
-to Cloudflare R2, analyzing notice text with Gemini, and displaying the results
-on a dashboard.
+DIUBoard brings DIU department notices and class routines into one searchable dashboard. It uses Next.js App Router, TypeScript, Tailwind CSS, Neon Postgres, Cheerio, and Gemini.
 
-## Setup
+## Features
 
-1. Install dependencies:
+- Recent notices from DIU's 31 academic department boards plus the ICT in Education, DSC Hall, and Registrar boards.
+- Daily incremental notice sync, duplicate-safe updates, and sync status history.
+- Daily discovery of routine PDFs across tracked departments.
+- Gemini PDF extraction that stores the routine as day, time-slot, row, room, course, and teacher cells.
+- Section search, including codes such as `64_I`, and a tabular routine view that mirrors the source PDF.
+- A routine management page for manual fetches and reviewing published routine versions.
 
-```bash
-npm install
-```
+## Local setup
 
-2. Copy environment variables:
+1. Install dependencies and copy the environment template:
 
-```bash
-cp .env.example .env.local
-```
+   ```bash
+   npm ci
+   cp .env.example .env.local
+   ```
 
-3. Fill `.env.local` with Neon/Postgres, Gemini, and R2 values.
+2. Create the app role if needed and set the connection strings:
 
-4. Run migrations and seed departments:
+   ```bash
+   neon roles create --branch production --name diuboard_app
+   neon connection-string production --database-name Routines --role-name diuboard_app --pooled
+   ```
 
-```bash
-npm run db:migrate
-npm run db:seed
-```
+   Set `DIU_DATABASE_URL` to the pooled `diuboard_app` connection and `DIU_DATABASE_URL_UNPOOLED` to the direct `neondb_owner` connection. Set `GEMINI_API_KEY` to a Gemini API key and a long random `ROUTINE_SYNC_SECRET` to enable manual routine scans.
+
+3. Apply the database migration with the direct connection:
+
+   ```bash
+   npm run db:migrate
+   ```
+
+4. Seed all tracked DIU boards and run the initial notice and routine sync:
+
+   ```bash
+   npm run sync:run
+   ```
 
 5. Start the app:
 
-```bash
-npm run dev
-```
+   ```bash
+   npm run dev
+   ```
 
-The dashboard is available at `/dashboard`. The scraper endpoint is public at
-`/api/cron/scrape` and can be triggered directly by cron or a manual request.
+The app connects to Neon only from server-side Next.js code. Keep `DIU_DATABASE_URL` server-only and never prefix it with `NEXT_PUBLIC_`.
 
-## Production Deploy
+## Routine updates
 
-Set these environment variables in Vercel before publishing:
+The scheduled GitHub Actions workflow scans DIU boards each day at 06:00 UTC. Add these repository secrets:
 
-- `NEON_DATABASE_URL`
+- `DIU_DATABASE_URL`
+- `DIU_DATABASE_URL_UNPOOLED`
 - `GEMINI_API_KEY`
-- `GEMINI_MODEL`
-- `R2_ACCOUNT_ID`
-- `R2_ACCESS_KEY_ID`
-- `R2_SECRET_ACCESS_KEY`
-- `R2_BUCKET_NAME`
-- `R2_PUBLIC_URL_BASE`
-- `SCRAPER_USER_AGENT`
-- `PIPELINE_MAX_NEW_PER_DEPARTMENT`
-- `PIPELINE_INTER_REQUEST_DELAY_MS`
 
-Then apply the existing migration and seed departments against the production
-database:
+Optional repository variables are `GEMINI_MODEL` and `GEMINI_ROUTINE_MODEL`; both default to `gemini-2.5-flash` when unset. To allow the manual action on `/routine/manage`, also configure `ROUTINE_SYNC_SECRET` in the deployment environment. The key is checked server-side and is not stored in Neon.
 
-```bash
-npx prisma migrate deploy
-npm run db:seed
-```
+Routine extraction is validated before publishing. A new version becomes current only after its complete table has been written successfully; the previous version remains current if PDF retrieval or parsing fails.
 
-Run one real scrape to populate the dashboard:
+## Scripts
 
-```bash
-npm run scrape:run
-```
+- `npm run dev` — run the app locally.
+- `npm run lint` — lint the app.
+- `npm run db:migrate` — apply pending SQL migrations with the direct Neon connection.
+- `npm run sync:run` — sync notices and check routine PDFs.
+- `npm run scrape:dry` — inspect the notice scraper output locally.
 
-`PIPELINE_MAX_NEW_PER_DEPARTMENT` defaults to `2` so cron runs stay short on
-hosted/serverless deployments. Increase it later if your plan allows longer
-background execution.
+## Database
 
-## Scraper Dry Run
+The versioned SQL migration lives in `db/migrations/`. It creates department, notice, sync-history, routine-version, routine-day, time-slot, and table-cell records, plus the atomic routine publishing function. The migration runner records applied versions in `diu_schema_migrations` and wraps each migration in a transaction.
 
-Use the dry-run command before changing parser selectors:
-
-```bash
-npm run scrape:dry -- --department=hall --full
-npm run scrape:dry -- --department=eee
-```
-
-Dry runs fetch and print notices only. They do not write to Postgres, upload to
-R2, or call Gemini.
-
-## Adding A Department
-
-Add the backend department code and display name in
-`lib/scraper/departments.ts`, then run the seed script again:
-
-```bash
-npm run db:seed
-```
-
-The scraper uses URLs in this form:
-
-```text
-https://webbackend.daffodilvarsity.edu.bd/department/{code}/notice
-https://webbackend.daffodilvarsity.edu.bd/department/{code}/notice-detail/{id}
-```
-
-## Scheduling
-
-`vercel.json` currently defines a once-daily Vercel Cron run:
-
-```json
-{ "path": "/api/cron/scrape", "schedule": "0 6 * * *" }
-```
-
-For checks more frequent than once per day on Vercel Hobby, use a GitHub Actions
-scheduled workflow that calls `/api/cron/scrape` directly.
-
-The included GitHub Actions workflow needs this repository secret:
-
-- `DEPLOY_URL` - your public deployment URL, for example
-  `https://your-project.vercel.app`
-
-# scrapper
+Public pages read the database through the server-side application connection. The Neon Data API is not enabled, so the database connection string stays on the server and public clients cannot query the database directly.
