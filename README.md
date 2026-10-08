@@ -49,6 +49,8 @@ DIUBoard brings DIU department notices and class routines into one searchable da
 
 The app connects to Neon only from server-side Next.js code. Keep `DIU_DATABASE_URL` server-only and never prefix it with `NEXT_PUBLIC_`.
 
+For Vercel, set `DIU_DATABASE_URL` to the pooled `diuboard_app` connection in the Production and Preview environments. Keep the direct owner connection in GitHub Actions as `DIU_DATABASE_URL_UNPOOLED` for migrations; the deployed app does not need it.
+
 ## Routine updates
 
 The scheduled GitHub Actions workflow scans DIU boards each day at 06:00 UTC. Add these repository secrets:
