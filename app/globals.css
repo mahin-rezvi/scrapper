@@ -251,6 +251,15 @@ button, a, input, select { -webkit-tap-highlight-color: transparent; }
 .empty-panel p { @apply mb-4 text-sm leading-6; color: var(--muted); }
 
 .management-page .page-heading { @apply pb-9; }
+.admin-page-actions { @apply flex flex-wrap gap-2; }
+.admin-sign-in { @apply mx-auto mt-8 max-w-[520px] p-6 sm:p-8; }
+.admin-sign-in h2 { @apply mt-2 text-lg font-semibold; }
+.admin-sign-in > p { @apply mt-2 text-sm leading-6; color: var(--muted); }
+.admin-sign-in .button { @apply mt-5; }
+.admin-sign-in-form { @apply mt-5 grid gap-3; }
+.admin-sign-in-form label { @apply text-xs font-semibold; }
+.admin-sign-in-form input { @apply h-12 rounded-xl border px-4 text-sm outline-none; border-color: var(--border); background: var(--background); color: var(--foreground); }
+.admin-sign-in-message { @apply mt-4 text-xs leading-5; color: var(--muted); }
 .sync-trigger { @apply grid gap-6 rounded-2xl border p-5 md:grid-cols-[.85fr_1.15fr] md:p-7; border-color: rgba(130, 221, 169, .2); background: linear-gradient(135deg, rgba(64, 135, 91, .14), var(--surface) 55%); }
 .sync-trigger-copy p { @apply max-w-[420px]; }
 .sync-trigger-form { @apply flex flex-col justify-center gap-2; }
@@ -268,6 +277,10 @@ button, a, input, select { -webkit-tap-highlight-color: transparent; }
 .status-time b { @apply text-xs font-medium; }
 .managed-routine-list { @apply overflow-hidden rounded-2xl border; border-color: var(--border); background: var(--surface); }
 .managed-routine-card { @apply grid gap-3 border-b p-4 last:border-0 sm:grid-cols-[auto_1fr_auto_auto] sm:items-center; border-color: var(--border); }
+.routine-manage-filter { @apply mb-6 flex flex-wrap items-end gap-3 rounded-2xl border p-4; border-color: var(--border); background: var(--surface); }
+.routine-manage-filter label { @apply flex w-full flex-col gap-2 text-[11px] font-semibold sm:w-auto; color: var(--muted); }
+.routine-manage-filter select { @apply h-11 min-w-0 flex-1 rounded-xl border px-3 text-sm sm:min-w-[300px]; border-color: var(--border); background: var(--background); color: var(--foreground); }
+.management-timetable-heading { @apply mt-6; }
 .department-mark { @apply grid h-10 w-10 place-items-center rounded-xl text-[10px] font-black; background: rgba(163, 241, 198, .1); color: var(--accent-strong); }
 .managed-routine-main h3 { @apply text-sm font-semibold; }
 .managed-routine-main p { @apply mt-1 text-xs; color: var(--muted); }
@@ -295,6 +308,7 @@ button, a, input, select { -webkit-tap-highlight-color: transparent; }
   .hero-routine-search .button { @apply w-full; }
   .overview-departments { @apply ml-0; }
   .routine-search-form { @apply grid-cols-1; }
+  .routine-manage-filter select, .routine-manage-filter .button { @apply w-full; }
   .notice-filter form { @apply grid-cols-1; }
   .notice-filter .button { @apply w-full; }
   .status-time { @apply text-left; }

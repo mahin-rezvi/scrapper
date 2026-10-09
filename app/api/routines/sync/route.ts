@@ -1,25 +1,26 @@
-import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { syncNotices } from "@/lib/pipeline/syncNotices";
 import { syncRoutines } from "@/lib/pipeline/syncRoutines";
+import { auth } from "@/lib/auth/server";
+import { isRoutineAdmin } from "@/lib/auth/config";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
-function matchesSecret(provided: string, expected: string): boolean {
-  const left = Buffer.from(provided);
-  const right = Buffer.from(expected);
-  return left.length === right.length && timingSafeEqual(left, right);
-}
-
 export async function POST(request: Request) {
-  const expected = process.env.ROUTINE_SYNC_SECRET;
-  if (!expected) {
-    return NextResponse.json({ error: "Manual routine sync is not configured." }, { status: 503 });
+  const origin = request.headers.get("origin");
+  let sameOrigin = false;
+  try {
+    sameOrigin = Boolean(origin) && new URL(origin!).origin === new URL(request.url).origin;
+  } catch {
+    sameOrigin = false;
   }
-  const provided = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-  if (!matchesSecret(provided, expected)) {
-    return NextResponse.json({ error: "Invalid management key." }, { status: 401 });
+  if (!sameOrigin) {
+    return NextResponse.json({ error: "This request is not allowed." }, { status: 403 });
+  }
+  const { data: session } = await auth.getSession();
+  if (!isRoutineAdmin(session?.user.email) || !session?.user.emailVerified) {
+    return NextResponse.json({ error: "Sign in with the authorized admin email to run a sync." }, { status: 401 });
   }
 
   try {

@@ -7,31 +7,6 @@ import { parseRoutineSearchType } from "@/lib/routines/search";
 
 export const dynamic = "force-dynamic";
 
-function displayDate(value: string | Date | null) {
-  if (!value) return "Date not listed";
-  if (value instanceof Date && Number.isNaN(value.getTime())) return "Date not listed";
-  const dateValue = value instanceof Date ? value.toISOString().slice(0, 10) : value.slice(0, 10);
-  const date = new Date(`${dateValue}T00:00:00Z`);
-  if (Number.isNaN(date.getTime())) return "Date not listed";
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(date);
-}
-
-function displayTimestamp(value: string | Date) {
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return "Recently";
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    timeZone: "Asia/Dhaka",
-  }).format(date);
-}
-
 export default async function RoutinePage({
   searchParams,
 }: {
@@ -65,11 +40,6 @@ export default async function RoutinePage({
             <h1>Class routine</h1>
             <p>Find your section in the latest official timetable.</p>
           </div>
-          {board?.selectedRoutine ? (
-            <a className="button button-outline" href={board.selectedRoutine.sourcePdfUrl} target="_blank" rel="noreferrer">
-              Open original PDF <span aria-hidden="true">↗</span>
-            </a>
-          ) : null}
         </section>
 
         <section className="routine-search panel" aria-label="Search routines">
@@ -139,43 +109,6 @@ export default async function RoutinePage({
               </section>
             ) : null}
 
-            <section className="timetable-section">
-              <div className="timetable-heading">
-                <div><span className="eyebrow">Current timetable</span><h2>{board.selectedRoutine.departmentName}</h2><p>Effective from {displayDate(board.selectedRoutine.effectiveFrom)}{board.selectedRoutine.versionLabel ? ` · ${board.selectedRoutine.versionLabel}` : ""}</p></div>
-                <span className={board.selectedRoutine.isCurrent ? "updated-pill" : "updated-pill updated-pill-fallback"}>
-                  <span />{board.selectedRoutine.isCurrent ? "Updated" : "Previous class routine"} {displayTimestamp(board.selectedRoutine.parsedAt)}
-                </span>
-              </div>
-              {!board.selectedRoutine.isCurrent ? (
-                <p className="routine-fallback-note">The latest imported notice was not a class timetable, so the last recognized class routine is shown.</p>
-              ) : null}
-              {board.days.map((day) => (
-                <div className="day-table-wrap" key={day.index}>
-                  <div className="day-table-scroll">
-                    <table className="routine-table">
-                      <thead>
-                        <tr className="routine-title-row"><th colSpan={Math.max(day.slots.length * 3, 1)}>{board.selectedRoutine?.title}</th></tr>
-                        <tr className="routine-version-row"><th colSpan={Math.max(day.slots.length * 3, 1)}>{board.selectedRoutine?.versionLabel ?? "Class Routine"}</th></tr>
-                        <tr className="routine-prepared-row"><th colSpan={Math.max(day.slots.length * 3, 1)}>Effective from {displayDate(board.selectedRoutine?.effectiveFrom ?? null)}{board.selectedRoutine?.preparedBy ? ` · Prepared by ${board.selectedRoutine.preparedBy}` : ""}</th></tr>
-                        <tr className="routine-day-row"><th colSpan={Math.max(day.slots.length * 3, 1)}>{day.name}</th></tr>
-                        <tr className="routine-slot-row">{day.slots.map((slot) => <th colSpan={3} key={slot.index}>{slot.label}</th>)}</tr>
-                        <tr className="routine-columns-row">{day.slots.flatMap((slot) => ["Room", "Course", "Teacher"].map((heading, index) => <th key={`${slot.index}-${index}`}>{heading}</th>))}</tr>
-                      </thead>
-                      <tbody>
-                        {day.rows.map((row, rowIndex) => (
-                          <tr key={rowIndex}>
-                            {row.flatMap((cell, slotIndex) => [cell.room, cell.course, cell.teacher].map((value, columnIndex) => (
-                              <td className={columnIndex === 1 ? "course-cell" : ""} key={`${slotIndex}-${columnIndex}`}>{value}</td>
-                            )))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              ))}
-              {board.selectedRoutine.preparedBy ? <p className="routine-source-note">Prepared by {board.selectedRoutine.preparedBy}. <a href={board.selectedRoutine.sourcePdfUrl} target="_blank" rel="noreferrer">View the source PDF</a>.</p> : null}
-            </section>
           </>
         )}
       </div>
