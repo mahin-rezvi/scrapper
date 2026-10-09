@@ -204,16 +204,23 @@ button, a, input, select { -webkit-tap-highlight-color: transparent; }
 .results-title, .timetable-heading { @apply mb-5 flex items-end justify-between gap-4; }
 .results-title h2, .timetable-heading h2 { @apply mt-1 text-2xl font-semibold tracking-tight; }
 .results-count { @apply rounded-full border px-3 py-1.5 text-[11px]; border-color: var(--border); color: var(--muted); }
-.match-grid { @apply grid gap-2 sm:grid-cols-2 xl:grid-cols-3; }
-.match-card { @apply grid grid-cols-[auto_1fr_auto] items-center gap-4 rounded-xl border p-4; border-color: var(--border); background: var(--surface); }
-.match-time { @apply flex min-w-[74px] flex-col gap-1 text-xs; }
-.match-time span { @apply text-[10px] font-bold uppercase tracking-wider; color: var(--accent-strong); }
-.match-time b { @apply font-mono; }
-.match-main { @apply flex min-w-0 flex-col gap-1; }
-.match-main b { @apply truncate text-xs; }
-.match-main span, .match-teacher span { @apply text-[10px]; color: var(--muted); }
-.match-teacher { @apply flex flex-col gap-1 text-right; }
-.match-teacher b { @apply text-[11px]; }
+.section-results-caption { @apply mt-2 text-xs; color: var(--muted); }
+.section-schedule { @apply grid gap-4; }
+.section-day { @apply overflow-hidden rounded-2xl border; border-color: var(--border); background: var(--surface); }
+.section-day-heading { @apply flex items-center gap-3 border-b px-4 py-3 sm:px-5; border-color: var(--border); }
+.section-day-number { @apply grid h-10 w-10 shrink-0 place-items-center rounded-xl text-sm font-bold; background: rgba(130, 221, 169, .12); color: var(--accent-strong); }
+.section-day-heading .eyebrow { @apply text-[9px]; }
+.section-day-heading h3 { @apply mt-0.5 text-base font-semibold; }
+.section-day-count { @apply ml-auto rounded-full border px-3 py-1 text-[10px]; border-color: var(--border); color: var(--muted); }
+.section-class-list { @apply divide-y; }
+.section-class-card { @apply grid gap-3 px-4 py-4 sm:grid-cols-[minmax(130px,.8fr)_minmax(180px,1.6fr)_minmax(130px,1fr)_minmax(90px,.55fr)] sm:items-center sm:gap-5 sm:px-5; border-color: var(--border); }
+.section-class-card > div { @apply flex min-w-0 flex-col gap-1; }
+.section-class-card > div > span { @apply text-[9px] font-bold tracking-[.14em]; color: var(--muted); }
+.section-class-card > div > b { @apply text-xs font-semibold leading-5; }
+.section-class-time b { @apply font-mono text-sm; color: var(--accent-strong); }
+.section-class-course b { @apply break-words; }
+.section-class-course small { @apply text-[10px]; color: var(--muted); }
+.section-class-room b { @apply inline-flex w-fit rounded-lg px-2 py-1; background: rgba(130, 221, 169, .1); }
 .no-matches { @apply rounded-xl border p-5 text-sm; border-color: var(--border); background: var(--surface); color: var(--muted); }
 .timetable-heading { @apply flex-wrap; }
 .timetable-heading p { @apply mt-2 text-xs; color: var(--muted); }
@@ -290,7 +297,5 @@ button, a, input, select { -webkit-tap-highlight-color: transparent; }
   .routine-search-form { @apply grid-cols-1; }
   .notice-filter form { @apply grid-cols-1; }
   .notice-filter .button { @apply w-full; }
-  .match-card { @apply grid-cols-[auto_1fr]; }
-  .match-teacher { @apply col-span-2 flex-row justify-between text-left; }
   .status-time { @apply text-left; }
 }

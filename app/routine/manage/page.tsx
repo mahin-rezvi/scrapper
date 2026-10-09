@@ -38,7 +38,7 @@ export default async function RoutineManagementPage() {
 
         <section className="management-status panel">
           <div className="status-icon">↻</div>
-          <div><span className="eyebrow">Automatic scan</span><h2>{data?.lastRun ? `Last check ${data.lastRun.status}` : "Five-minute updates are ready to configure"}</h2><p>{data?.lastRun?.message ?? "The scheduled GitHub Actions workflow checks department boards every five minutes after the required database secrets are added."}</p></div>
+          <div><span className="eyebrow">Automatic scan</span><h2>{data?.lastRun ? `Last check ${data.lastRun.status}` : "Ten-hour updates are ready to configure"}</h2><p>{data?.lastRun?.message ?? "The scheduled GitHub Actions workflow checks department boards every ten hours after the required database secrets are added."}</p></div>
           <div className="status-time"><span>Last checked</span><b>{dateTime(data?.lastRun?.finishedAt ?? null)}</b></div>
         </section>
 

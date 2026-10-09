@@ -2,7 +2,7 @@ name: Sync DIU notices and routines
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "0 */10 * * *"
   workflow_dispatch:
 
 concurrency:
