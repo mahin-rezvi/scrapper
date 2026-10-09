@@ -10,6 +10,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:routines": "node --conditions=react-server --import tsx --test tests/routines/*.test.ts",
     "db:migrate": "tsx scripts/migrateDatabase.ts",
     "scrape:dry": "tsx scripts/dryRun.ts",
     "sync:run": "node --conditions=react-server --import tsx scripts/runSync.ts"
@@ -24,6 +25,7 @@
     "dotenv": "^17.4.2",
     "lucide-react": "^1.24.0",
     "next": "^16.3.3",
+    "pdfjs-dist": "^5.4.624",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "server-only": "^0.0.1",

@@ -1,4 +1,5 @@
 import { db } from "@/lib/db/postgres";
+import { searchRoutineEntries, type RoutineSearchType } from "@/lib/routines/search";
 
 export type RoutineListItem = {
   id: string;
@@ -11,6 +12,7 @@ export type RoutineListItem = {
   preparedBy: string | null;
   sourcePdfUrl: string;
   parsedAt: string;
+  isCurrent: boolean;
 };
 
 export type RoutineDepartment = { id: number; code: string; name: string };
@@ -40,17 +42,27 @@ type RoutineQueryRow = {
   prepared_by: string | null;
   source_pdf_url: string;
   parsed_at: string;
+  is_current: boolean;
 };
 
 export async function listCurrentRoutines(): Promise<RoutineListItem[]> {
   const { rows } = await db.query<RoutineQueryRow>(`
-    SELECT r.id, r.department_id, d.code AS department_code, d.name AS department_name,
-           r.title, r.version_label, r.effective_from, r.prepared_by,
-           r.source_pdf_url, r.parsed_at::text AS parsed_at
-    FROM public.routine_versions AS r
-    JOIN public.departments AS d ON d.id = r.department_id
-    WHERE r.is_current AND d.is_active
-    ORDER BY r.parsed_at DESC, r.id DESC
+    SELECT latest.id, latest.department_id, latest.department_code, latest.department_name,
+           latest.title, latest.version_label, latest.effective_from, latest.prepared_by,
+           latest.source_pdf_url, latest.parsed_at::text AS parsed_at, latest.is_current
+    FROM (
+      SELECT DISTINCT ON (r.department_id)
+             r.id, r.department_id, d.code AS department_code, d.name AS department_name,
+             r.title, r.version_label, r.effective_from, r.prepared_by,
+             r.source_pdf_url, r.parsed_at, r.is_current
+      FROM public.routine_versions AS r
+      JOIN public.departments AS d ON d.id = r.department_id
+      WHERE d.is_active
+        AND concat_ws(' ', r.title, r.parsed_data->>'title') ~* '\\m(routine|class[[:space:]]+(time[[:space:]]*table|schedule))\\M'
+        AND concat_ws(' ', r.title, r.parsed_data->>'title') !~* '\\m(exam(ination)?s?|mid[[:space:]-]?term|quiz(zes)?)\\M'
+      ORDER BY r.department_id, r.is_current DESC, r.parsed_at DESC, r.id DESC
+    ) AS latest
+    ORDER BY latest.parsed_at DESC, latest.id DESC
   `);
 
   return rows.map((row) => ({
@@ -64,6 +76,7 @@ export async function listCurrentRoutines(): Promise<RoutineListItem[]> {
     preparedBy: row.prepared_by,
     sourcePdfUrl: row.source_pdf_url,
     parsedAt: row.parsed_at,
+    isCurrent: row.is_current,
   }));
 }
 
@@ -105,14 +118,16 @@ export async function routineManagementData() {
 
 export async function routineBoardData(
   departmentCode?: string,
-  sectionQuery?: string
+  sectionQuery?: string,
+  searchType: RoutineSearchType = "section",
 ): Promise<{
   routines: RoutineListItem[];
   departments: RoutineDepartment[];
   selectedRoutine: RoutineListItem | null;
   days: RoutineDay[];
-  matches: Array<{ day: string; slot: string; room: string; course: string; teacher: string }>;
+  matches: Array<{ day: string; slot: string; room: string; course: string; teacher: string; sectionCode: string | null }>;
   section: string;
+  searchType: RoutineSearchType;
 }> {
   const [routines, departmentResult] = await Promise.all([
     listCurrentRoutines(),
@@ -129,14 +144,14 @@ export async function routineBoardData(
     name: row.name,
   }));
   const selectedRoutine = departmentCode
-    ? routines.find((routine) => routine.departmentCode === departmentCode) ?? null
+    ? routines.find((routine) => routine.departmentCode.toUpperCase() === departmentCode.trim().toUpperCase()) ?? null
     : routines[0] ?? null;
 
   if (!selectedRoutine) {
-    return { routines, departments, selectedRoutine: null, days: [], matches: [], section: sectionQuery ?? "" };
+    return { routines, departments, selectedRoutine: null, days: [], matches: [], section: sectionQuery ?? "", searchType };
   }
 
-  const section = (sectionQuery ?? "").trim().toUpperCase();
+  const section = (sectionQuery ?? "").trim();
   const [dayResult, slotResult, entryResult] = await Promise.all([
     db.query<{ day_index: number; day_name: string }>(`
       SELECT day_index, day_name
@@ -201,17 +216,27 @@ export async function routineBoardData(
     };
   });
 
-  const matches = section
-    ? entryResult.rows
-        .filter((entry) => entry.section_code === section)
-        .flatMap((entry) => {
-          const day = days.find((item) => item.index === entry.day_index);
-          const cell = day?.rows[entry.row_index]?.[entry.slot_index];
-          const slot = day?.slots[entry.slot_index];
-          if (!day || !cell || !slot) return [];
-          return [{ day: day.name, slot: slot.label, ...cell }];
-        })
-    : [];
+  const matches = searchRoutineEntries(
+    entryResult.rows.map((entry) => ({
+      dayIndex: entry.day_index,
+      rowIndex: entry.row_index,
+      slotIndex: entry.slot_index,
+      day: days.find((item) => item.index === entry.day_index)?.name ?? "",
+      slot: days.find((item) => item.index === entry.day_index)?.slots[entry.slot_index]?.label ?? "",
+      room: entry.room,
+      course: entry.course,
+      teacher: entry.teacher,
+      sectionCode: entry.section_code,
+    })),
+    section,
+    searchType,
+  ).flatMap((entry) => {
+    const day = days.find((item) => item.index === entry.dayIndex);
+    const cell = day?.rows[entry.rowIndex]?.[entry.slotIndex];
+    const slot = day?.slots[entry.slotIndex];
+    if (!day || !cell || !slot) return [];
+    return [{ day: day.name, slot: slot.label, ...cell, sectionCode: entry.sectionCode }];
+  });
 
-  return { routines, departments, selectedRoutine, days, matches, section };
+  return { routines, departments, selectedRoutine, days, matches, section, searchType };
 }

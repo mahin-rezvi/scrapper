@@ -33,6 +33,8 @@ html { min-height: 100%; scroll-behavior: smooth; background: var(--background);
 body { min-height: 100vh; margin: 0; background: var(--background); color: var(--foreground); font-family: var(--font-inter), system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
 a { color: inherit; }
 button, input, select { font: inherit; }
+button, a, input, select { -webkit-tap-highlight-color: transparent; }
+:where(a, button, input, select):focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 3px; }
 
 .theme-toggle { @apply inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold transition; border-color: var(--border); background: var(--surface); color: var(--foreground); }
 .theme-toggle:hover { border-color: var(--accent-strong); }
@@ -62,11 +64,34 @@ button, input, select { font: inherit; }
 .hero-copy h1 { @apply mb-6 text-6xl font-semibold leading-[.98] tracking-[-.07em] sm:text-7xl md:text-8xl; }
 .hero-copy h1 em { color: var(--accent); font-style: normal; }
 .hero-intro { @apply max-w-[510px] text-base leading-7 md:text-lg; color: var(--muted); }
-.hero-actions { @apply mt-8 flex flex-wrap items-center gap-2; }
+.hero-routine-search { @apply mt-7 grid max-w-[570px] gap-2 rounded-2xl border p-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end; border-color: var(--border); background: var(--surface); box-shadow: 0 20px 70px rgba(0, 0, 0, .16); }
+.hero-routine-search label { @apply flex min-w-0 flex-col gap-1.5 px-2 text-[10px] font-semibold; color: var(--muted); }
+.hero-routine-search input { @apply h-9 min-w-0 border-0 bg-transparent text-sm font-medium outline-none; color: var(--foreground); }
+.hero-routine-search input::placeholder { color: var(--muted); }
+.hero-routine-search .button { @apply min-h-10 px-4 text-xs; }
+.hero-links { @apply mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold; color: var(--muted); }
+.hero-links a { @apply no-underline transition; }
+.hero-links a:hover { color: var(--accent-strong); }
+.hero-links span { @apply ml-1; color: var(--accent-strong); }
 .hero-note { @apply mt-8 flex items-center gap-2 text-xs; color: var(--muted); }
 .hero-note span { color: var(--accent-strong); }
 .hero-art { @apply relative mx-auto w-full max-w-[530px] py-6; }
 .art-glow { @apply absolute inset-5 rounded-full blur-3xl; background: rgba(84, 200, 139, .17); }
+.home-dashboard-card { @apply relative overflow-hidden rounded-3xl border p-5 shadow-2xl sm:p-7; border-color: rgba(205, 236, 215, .19); background: linear-gradient(150deg, #172721, #101a17 65%, #14251d); transform: rotate(1deg); }
+.home-card-top { @apply mb-7 flex items-center gap-3 border-b border-white/10 pb-5; }
+.home-card-logo { @apply grid h-10 w-10 place-items-center rounded-xl text-sm font-black; background: #a3f1c6; color: #0b2418; }
+.home-card-top > div, .home-card-tool > span:nth-child(2) { @apply flex min-w-0 flex-1 flex-col gap-1; }
+.home-card-top b, .home-card-tool b { @apply text-sm font-semibold text-white/90; }
+.home-card-top > div > span, .home-card-tool small { @apply text-[10px] text-white/45; }
+.home-card-status { @apply inline-flex items-center gap-1.5 rounded-full border border-white/10 px-2.5 py-1 text-[9px] font-semibold text-emerald-200; }
+.home-card-status i { @apply h-1.5 w-1.5 rounded-full bg-emerald-300; }
+.home-card-tool { @apply flex items-center gap-3 border-b border-white/[.06] py-4 no-underline transition; }
+.home-card-tool:hover { @apply translate-x-1; }
+.home-card-tool > span:last-child { @apply text-emerald-200; }
+.home-tool-icon { @apply grid h-10 w-10 place-items-center rounded-xl bg-emerald-300/10 text-lg text-emerald-200; }
+.home-tool-icon-blue { @apply bg-blue-300/10 text-blue-200; }
+.home-card-footer { @apply pt-5 text-[9px] font-semibold tracking-[.14em] text-white/40; }
+.home-card-footer span { @apply mx-2 text-emerald-300; }
 .routine-preview { @apply relative overflow-hidden rounded-3xl border p-5 shadow-2xl sm:p-7; border-color: rgba(205, 236, 215, .19); background: linear-gradient(150deg, #172721, #101a17 65%, #14251d); transform: rotate(1deg); }
 .preview-top { @apply mb-8 flex items-center gap-2 text-[10px] font-bold tracking-[.2em] text-emerald-100/60; }
 .preview-dot { @apply h-2 w-2 rounded-full bg-emerald-300; }
@@ -86,6 +111,12 @@ button, input, select { font: inherit; }
 .preview-foot { @apply flex justify-between pt-5 text-[10px] font-medium text-white/45; }
 .floating-tag { @apply absolute -bottom-2 -left-3 flex items-center gap-2 rounded-full border px-4 py-3 text-xs font-semibold shadow-xl; border-color: var(--border); background: var(--surface-raised); }
 .floating-tag span { @apply grid h-6 w-6 place-items-center rounded-full text-sm; background: var(--accent); color: var(--accent-ink); }
+.landing-metrics { @apply grid gap-2 border-y py-5 sm:grid-cols-2 lg:grid-cols-4; border-color: var(--border); }
+.metric-card { @apply flex min-h-[88px] flex-col justify-center gap-1 rounded-xl border px-4 py-3; border-color: var(--border); background: var(--surface); }
+.metric-card > b { @apply text-2xl font-semibold tracking-tight; }
+.metric-card > span, .metric-card small { @apply text-[10px]; color: var(--muted); }
+.metric-sync > b { @apply text-sm font-semibold; }
+.overview-unavailable { @apply px-2 text-xs; color: var(--muted); }
 .landing-tools { @apply border-t py-12 md:py-16; border-color: var(--border); }
 .tools-heading { @apply mb-6 flex items-end justify-between gap-5; }
 .tools-heading h2 { @apply mt-2 text-2xl font-semibold tracking-tight sm:text-3xl; }
@@ -124,6 +155,22 @@ button, input, select { font: inherit; }
 .notice-card h2 a:hover { color: var(--accent-strong); }
 .notice-card > p { @apply text-xs leading-5; color: var(--muted); }
 .notice-card footer { @apply mt-auto flex justify-between gap-4 border-t pt-4 text-[10px]; border-color: var(--border); color: var(--muted); }
+.notice-card footer a { @apply font-semibold no-underline; color: var(--accent-strong); }
+.notice-card footer a:hover { @apply underline; }
+.notice-attachments { @apply flex flex-wrap justify-end gap-x-3 gap-y-1; }
+.notice-filter { @apply mt-2; }
+.notice-filter form { @apply grid gap-3 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_auto_auto] lg:items-end; }
+.notice-filter label { @apply flex min-w-0 flex-col gap-2 text-[11px] font-semibold; color: var(--muted); }
+.notice-filter input, .notice-filter select { @apply h-11 min-w-0 rounded-xl border px-3 text-sm font-normal outline-none transition; border-color: var(--border); background: var(--background); color: var(--foreground); }
+.notice-filter input:focus, .notice-filter select:focus { border-color: var(--accent-strong); }
+.notice-filter .button { @apply w-full sm:w-auto; }
+.filter-reset { @apply px-2 py-3 text-center text-xs font-semibold no-underline; color: var(--muted); }
+.filter-reset:hover { color: var(--accent-strong); }
+.notice-list-heading { @apply mt-8 mb-4 flex items-end justify-between gap-4; }
+.notice-list-heading h2 { @apply text-xl font-semibold tracking-tight; }
+.notice-list-heading span { @apply text-xs; color: var(--muted); }
+.notice-pagination { @apply flex flex-wrap items-center justify-between gap-3 py-8; color: var(--muted); }
+.notice-pagination > span { @apply text-xs; }
 
 .routine-heading { @apply pb-8; }
 .panel { @apply rounded-2xl border p-5 md:p-7; border-color: var(--border); background: var(--surface); }
@@ -132,11 +179,27 @@ button, input, select { font: inherit; }
 .search-symbol { @apply grid h-12 w-12 place-items-center rounded-2xl text-3xl; background: rgba(163, 241, 198, .1); color: var(--accent); }
 .search-caption h2, .sync-trigger-copy h2 { @apply text-lg font-semibold; }
 .search-caption p, .sync-trigger-copy p { @apply mt-1 text-xs leading-5; color: var(--muted); }
-.routine-search-form { @apply grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end; }
+.routine-search-form { @apply grid gap-3 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end; }
 .routine-search-form label, .sync-trigger-form label { @apply flex flex-col gap-2 text-[11px] font-semibold; color: var(--muted); }
 .routine-search-form input, .routine-search-form select, .sync-key-row input { @apply h-11 min-w-0 rounded-xl border px-3 text-sm outline-none transition; border-color: var(--border); background: var(--background); color: var(--foreground); }
 .routine-search-form input:focus, .routine-search-form select:focus, .sync-key-row input:focus { border-color: var(--accent-strong); }
 .routine-search-form .button { @apply w-full sm:w-auto; }
+.saved-sections { @apply mt-5 border-t pt-4; border-color: var(--border); }
+.saved-sections-heading { @apply flex flex-wrap items-center justify-between gap-3; }
+.saved-sections-heading > div { @apply flex flex-col gap-1; }
+.saved-sections-heading b { @apply text-xs font-semibold; }
+.saved-sections-heading span { @apply text-[10px]; color: var(--muted); }
+.save-section-button { @apply rounded-full border px-3 py-2 text-[10px] font-semibold transition; border-color: var(--border); color: var(--foreground); }
+.save-section-button:hover:not(:disabled) { border-color: var(--accent-strong); }
+.save-section-button:disabled { @apply cursor-not-allowed opacity-45; }
+.save-section-button > span { @apply mr-1 text-sm; color: var(--accent-strong); }
+.saved-section-list { @apply mt-3 flex flex-wrap gap-2; }
+.saved-section-chip { @apply inline-flex items-center gap-2 rounded-full border py-1 pl-3 pr-1 text-[10px] font-semibold; border-color: var(--border); background: var(--background); }
+.saved-section-chip a { @apply no-underline; }
+.saved-section-chip > button { @apply grid h-5 w-5 place-items-center rounded-full text-sm; color: var(--muted); }
+.saved-section-chip > button:hover { color: var(--danger); }
+.saved-sections-empty { @apply mt-3 text-[10px]; color: var(--muted); }
+.visually-hidden { @apply absolute h-px w-px overflow-hidden whitespace-nowrap; clip: rect(0, 0, 0, 0); clip-path: inset(50%); }
 .section-results, .timetable-section, .managed-routines { @apply mt-10; }
 .results-title, .timetable-heading { @apply mb-5 flex items-end justify-between gap-4; }
 .results-title h2, .timetable-heading h2 { @apply mt-1 text-2xl font-semibold tracking-tight; }
@@ -156,6 +219,8 @@ button, input, select { font: inherit; }
 .timetable-heading p { @apply mt-2 text-xs; color: var(--muted); }
 .updated-pill { @apply inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[10px]; border-color: var(--border); color: var(--muted); }
 .updated-pill > span { @apply inline-block h-1.5 w-1.5; }
+.updated-pill-fallback { border-color: #d59a42; color: #9a6413; }
+.routine-fallback-note { @apply mb-4 rounded-xl border px-4 py-3 text-xs leading-5; border-color: rgba(213, 154, 66, .45); color: var(--muted); }
 .day-table-wrap { @apply mb-5 overflow-hidden rounded-xl border; border-color: var(--border); background: white; }
 .day-table-scroll { @apply overflow-x-auto; }
 .routine-table { @apply w-full border-collapse text-center; min-width: 900px; color: #101514; font-family: Arial, sans-serif; font-size: 10px; }
@@ -208,13 +273,23 @@ button, input, select { font: inherit; }
 .route-loading-title { @apply font-semibold; }
 .route-loading-copy { @apply mt-1 text-xs; color: var(--muted); }
 
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}
+
 @media (max-width: 720px) {
   .site-header { @apply flex-wrap; }
   .site-links { @apply order-3 w-full justify-between gap-2 border-t pt-4 text-xs; border-color: var(--border); }
   .site-header .theme-toggle { @apply ml-auto; }
   .hero-copy h1 { @apply text-6xl; }
+  .hero-routine-search { @apply grid-cols-1; }
+  .hero-routine-search label { @apply border-b px-2 py-1; border-color: var(--border); }
+  .hero-routine-search .button { @apply w-full; }
   .overview-departments { @apply ml-0; }
   .routine-search-form { @apply grid-cols-1; }
+  .notice-filter form { @apply grid-cols-1; }
+  .notice-filter .button { @apply w-full; }
   .match-card { @apply grid-cols-[auto_1fr]; }
   .match-teacher { @apply col-span-2 flex-row justify-between text-left; }
   .status-time { @apply text-left; }

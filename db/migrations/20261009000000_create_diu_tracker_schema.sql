@@ -31,6 +31,13 @@ CREATE INDEX IF NOT EXISTS notices_department_published_idx
   ON public.notices (department_id, published_at DESC NULLS LAST, id DESC);
 CREATE INDEX IF NOT EXISTS notices_recent_idx
   ON public.notices (published_at DESC NULLS LAST, id DESC);
+CREATE INDEX IF NOT EXISTS notices_search_idx
+  ON public.notices USING gin (
+    to_tsvector('simple', coalesce(title, '') || ' ' || coalesce(body_text, ''))
+  );
+CREATE INDEX IF NOT EXISTS notices_category_idx
+  ON public.notices (category, published_at DESC NULLS LAST, id DESC)
+  WHERE category IS NOT NULL AND category <> '';
 
 CREATE TABLE IF NOT EXISTS public.sync_runs (
   id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

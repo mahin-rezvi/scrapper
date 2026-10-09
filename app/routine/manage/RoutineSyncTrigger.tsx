@@ -37,7 +37,7 @@ export default function RoutineSyncTrigger({ enabled }: { enabled: boolean }) {
       <div className="sync-trigger-copy">
         <span className="eyebrow">Manual update</span>
         <h2>Check for the latest PDFs</h2>
-        <p>Fetches recent routine notices from all tracked department boards, reads each new PDF, and publishes valid timetable data.</p>
+        <p>Refreshes department notices, then reads and publishes a routine PDF only if that department&apos;s latest notice is a class timetable.</p>
       </div>
       <div className="sync-trigger-form">
         <label htmlFor="routine-admin-key">Management key</label>

@@ -1,14 +1,16 @@
 # DIUBoard
 
-DIUBoard brings DIU department notices and class routines into one searchable dashboard. It uses Next.js App Router, TypeScript, Tailwind CSS, Neon Postgres, Cheerio, and Gemini.
+DIUBoard brings DIU department notices and class routines into one searchable dashboard. It uses Next.js App Router, TypeScript, Tailwind CSS, Neon Postgres, Cheerio, Gemini for notice analysis and OCR fallback, and PDF.js for local PDF text/layout extraction.
 
 ## Features
 
-- Recent notices from DIU's 31 academic department boards plus the ICT in Education, DSC Hall, and Registrar boards.
-- Daily incremental notice sync, duplicate-safe updates, and sync status history.
-- Daily discovery of routine PDFs across tracked departments.
-- Gemini PDF extraction that stores the routine as day, time-slot, row, room, course, and teacher cells.
-- Section search, including codes such as `64_I`, and a tabular routine view that mirrors the source PDF.
+- Searchable and filterable notices from DIU's 31 academic department boards plus the ICT in Education, DSC Hall, and Registrar boards.
+- Cursor-paginated notice results, direct source/attachment links, and a live overview backed by database totals.
+- Five-minute incremental notice polling, duplicate-safe updates, and sync status history.
+- Routine PDF discovery and parsing after each notice poll, only when a department's latest notice is a class routine.
+- PDF.js extraction that maps routine text by page coordinates into day, time-slot, row, room, course, and teacher cells, with Gemini vision fallback for scanned PDFs or unsupported table layouts.
+- Department-aware timetable search by section (including codes such as `64_I`), teacher, course, or room, plus a tabular routine view that mirrors the source PDF.
+- Device-local saved sections for one-tap access, with no account required.
 - A routine management page for manual fetches and reviewing published routine versions.
 
 ## Local setup
@@ -27,7 +29,7 @@ DIUBoard brings DIU department notices and class routines into one searchable da
    neon connection-string production --database-name Routines --role-name diuboard_app --pooled
    ```
 
-   Set `DIU_DATABASE_URL` to the pooled `diuboard_app` connection and `DIU_DATABASE_URL_UNPOOLED` to the direct `neondb_owner` connection. Set `GEMINI_API_KEY` to a Gemini API key and a long random `ROUTINE_SYNC_SECRET` to enable manual routine scans.
+   Set `DIU_DATABASE_URL` to the pooled `diuboard_app` connection and `DIU_DATABASE_URL_UNPOOLED` to the direct `neondb_owner` connection. Set `GEMINI_API_KEY` for notice analysis and vision fallback, and a long random `ROUTINE_SYNC_SECRET` to enable manual routine scans. Text-based routine PDFs are parsed locally and need no API key.
 
 3. Apply the database migration with the direct connection:
 
@@ -49,24 +51,28 @@ DIUBoard brings DIU department notices and class routines into one searchable da
 
 The app connects to Neon only from server-side Next.js code. Keep `DIU_DATABASE_URL` server-only and never prefix it with `NEXT_PUBLIC_`.
 
-For Vercel, set `DIU_DATABASE_URL` to the pooled `diuboard_app` connection in the Production and Preview environments. Keep the direct owner connection in GitHub Actions as `DIU_DATABASE_URL_UNPOOLED` for migrations; the deployed app does not need it.
+For Vercel and GitHub Actions, set `DIU_DATABASE_URL` to the pooled `diuboard_app` connection. Use `DIU_DATABASE_URL_UNPOOLED` locally or in a separate migration job only when applying schema changes; scheduled notice/routine polling does not need the direct owner connection.
 
 ## Routine updates
 
-The scheduled GitHub Actions workflow scans DIU boards each day at 06:00 UTC. Add these repository secrets:
+The scheduled GitHub Actions workflow polls DIU boards every five minutes and parses a routine only when that department's latest stored notice is a class routine. It does not fall back to an older routine notice when the latest notice is unrelated, and a department whose notice poll failed is skipped for that run. Open routine pages refresh from Neon every five minutes while visible. DIU does not provide a notice webhook, so this is near-real-time polling rather than a push-based real-time feed.
+
+Apply schema migrations separately when the schema changes; scheduled polling never runs DDL. Configure the database role secret below after running `npm run db:migrate` once for the target database. Add these GitHub repository secrets:
 
 - `DIU_DATABASE_URL`
-- `DIU_DATABASE_URL_UNPOOLED`
 - `GEMINI_API_KEY`
 
-Optional repository variables are `GEMINI_MODEL` and `GEMINI_ROUTINE_MODEL`; both default to `gemini-2.5-flash` when unset. To allow the manual action on `/routine/manage`, also configure `ROUTINE_SYNC_SECRET` in the deployment environment. The key is checked server-side and is not stored in Neon.
+`GEMINI_MODEL` remains optional and defaults to `gemini-2.5-flash` for notice analysis. `GEMINI_ROUTINE_MODEL` optionally selects the vision fallback model and defaults to `gemini-3.8-flash`. Text-based routine PDFs are parsed locally; the Gemini API key is used only when a PDF has no usable text layer or the local table mapping fails validation. For manual routine scans on `/routine/manage`, configure `ROUTINE_SYNC_SECRET` in the Vercel environment.
 
-Routine extraction is validated before publishing. A new version becomes current only after its complete table has been written successfully; the previous version remains current if PDF retrieval or parsing fails.
+Routine extraction uses PDF text positions first, then Gemini vision as a fallback, and validates the resulting Room/Course/Teacher grid before publishing. Examination and mid-term routine notices are excluded from class-timetable discovery, and an extracted exam title is rejected as a final safeguard. The student view falls back to the last recognized class routine instead of showing an exam timetable, and clearly labels that fallback when the latest published version is not a class routine. A new version becomes current only after its complete table has been written successfully; the previous version remains current if PDF retrieval or parsing fails. If neither extraction path produces a complete, schema-valid table, the new routine is rejected. The parser is not claimed to be perfect: supported PDF layouts should be checked against their source whenever DIU changes a template.
+
+Notice search uses PostgreSQL full-text search with a matching GIN index and keyset pagination, so loading older notices does not require scanning and skipping every prior page. Run `npm run db:migrate` to apply the idempotent notice search/category indexes on an existing installation.
 
 ## Scripts
 
 - `npm run dev` — run the app locally.
 - `npm run lint` — lint the app.
+- `npm run test:routines` — run routine search and notice-classification regression tests.
 - `npm run db:migrate` — apply pending SQL migrations with the direct Neon connection.
 - `npm run sync:run` — sync notices and check routine PDFs.
 - `npm run scrape:dry` — inspect the notice scraper output locally.

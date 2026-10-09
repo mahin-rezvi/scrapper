@@ -38,7 +38,7 @@ export default async function RoutineManagementPage() {
 
         <section className="management-status panel">
           <div className="status-icon">↻</div>
-          <div><span className="eyebrow">Automatic scan</span><h2>{data?.lastRun ? `Last check ${data.lastRun.status}` : "Daily update is ready to configure"}</h2><p>{data?.lastRun?.message ?? "The scheduled GitHub Actions workflow checks department boards every day after the required secrets are added."}</p></div>
+          <div><span className="eyebrow">Automatic scan</span><h2>{data?.lastRun ? `Last check ${data.lastRun.status}` : "Five-minute updates are ready to configure"}</h2><p>{data?.lastRun?.message ?? "The scheduled GitHub Actions workflow checks department boards every five minutes after the required database secrets are added."}</p></div>
           <div className="status-time"><span>Last checked</span><b>{dateTime(data?.lastRun?.finishedAt ?? null)}</b></div>
         </section>
 
@@ -51,11 +51,12 @@ export default async function RoutineManagementPage() {
                   <div className="department-mark">{routine.departmentCode.toUpperCase().slice(0, 3)}</div>
                   <div className="managed-routine-main"><h3>{routine.departmentName}</h3><p>{routine.title}{routine.versionLabel ? ` · ${routine.versionLabel}` : ""}</p></div>
                   <span className="routine-effective">Effective {routine.effectiveFrom ?? "date unavailable"}</span>
+                  {!routine.isCurrent ? <span className="routine-effective">Previous class routine</span> : null}
                   <a className="text-link" href={routine.sourcePdfUrl} target="_blank" rel="noreferrer">PDF <span aria-hidden="true">↗</span></a>
                 </article>
               ))}
             </div>
-          ) : <div className="empty-panel compact-empty"><h2>No published routines yet</h2><p>Run the first routine update after configuring Supabase and Gemini credentials.</p></div>}
+          ) : <div className="empty-panel compact-empty"><h2>No published routines yet</h2><p>Run the first routine update after configuring the Neon database connection. Routine PDF parsing does not require Gemini credentials.</p></div>}
         </section>
       </div>
     </main>

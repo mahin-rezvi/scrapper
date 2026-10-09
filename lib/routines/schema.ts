@@ -46,5 +46,8 @@ export function extractSectionCode(course: string): string | null {
     const candidate = match[1].trim().toUpperCase();
     if (/^[A-Z0-9]{1,8}(?:[_-][A-Z0-9]{1,8})+$/.test(candidate)) return candidate;
   }
+  const baseCourse = course.replace(/\s*\([^()]*\)\s*$/, "").trim();
+  const section = baseCourse.match(/(?:^|\s)([A-Z]\d{0,2})$/i);
+  if (section) return section[1].toUpperCase();
   return null;
 }

@@ -11,8 +11,15 @@ async function main() {
 
   const notices = await syncNotices();
   console.log("Notice sync:", JSON.stringify(notices, null, 2));
-  const routines = await syncRoutines();
+  const failedNoticeDepartments = new Set(
+    notices.departments.filter((department) => department.errors > 0).map((department) => department.department)
+  );
+  const routines = await syncRoutines({ skipDepartmentCodes: failedNoticeDepartments });
   console.log("Routine sync:", JSON.stringify(routines, null, 2));
+  if (notices.status !== "completed" || routines.status !== "completed") {
+    console.error("DIU sync completed with errors; review the per-department results above.");
+    process.exitCode = 1;
+  }
 }
 
 main()

@@ -2,8 +2,12 @@ name: Sync DIU notices and routines
 
 on:
   schedule:
-    - cron: "0 6 * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
+
+concurrency:
+  group: diu-notice-routine-sync
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -14,7 +18,6 @@ jobs:
     timeout-minutes: 45
     env:
       DIU_DATABASE_URL: ${{ secrets.DIU_DATABASE_URL }}
-      DIU_DATABASE_URL_UNPOOLED: ${{ secrets.DIU_DATABASE_URL_UNPOOLED }}
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
       GEMINI_ROUTINE_MODEL: ${{ vars.GEMINI_ROUTINE_MODEL }}
@@ -26,5 +29,4 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm run db:migrate
       - run: npm run sync:run
