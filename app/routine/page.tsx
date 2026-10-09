@@ -7,14 +7,29 @@ import { parseRoutineSearchType } from "@/lib/routines/search";
 
 export const dynamic = "force-dynamic";
 
-function displayDate(value: string | null) {
+function displayDate(value: string | Date | null) {
   if (!value) return "Date not listed";
+  if (value instanceof Date && Number.isNaN(value.getTime())) return "Date not listed";
+  const dateValue = value instanceof Date ? value.toISOString().slice(0, 10) : value.slice(0, 10);
+  const date = new Date(`${dateValue}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return "Date not listed";
   return new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
     month: "long",
     year: "numeric",
     timeZone: "UTC",
-  }).format(new Date(`${value}T00:00:00Z`));
+  }).format(date);
+}
+
+function displayTimestamp(value: string | Date) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "Recently";
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "Asia/Dhaka",
+  }).format(date);
 }
 
 export default async function RoutinePage({
@@ -114,7 +129,7 @@ export default async function RoutinePage({
               <div className="timetable-heading">
                 <div><span className="eyebrow">Current timetable</span><h2>{board.selectedRoutine.departmentName}</h2><p>Effective from {displayDate(board.selectedRoutine.effectiveFrom)}{board.selectedRoutine.versionLabel ? ` · ${board.selectedRoutine.versionLabel}` : ""}</p></div>
                 <span className={board.selectedRoutine.isCurrent ? "updated-pill" : "updated-pill updated-pill-fallback"}>
-                  <span />{board.selectedRoutine.isCurrent ? "Updated" : "Previous class routine"} {new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Dhaka" }).format(new Date(board.selectedRoutine.parsedAt))}
+                  <span />{board.selectedRoutine.isCurrent ? "Updated" : "Previous class routine"} {displayTimestamp(board.selectedRoutine.parsedAt)}
                 </span>
               </div>
               {!board.selectedRoutine.isCurrent ? (

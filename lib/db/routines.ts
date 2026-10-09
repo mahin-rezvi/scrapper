@@ -48,7 +48,7 @@ type RoutineQueryRow = {
 export async function listCurrentRoutines(): Promise<RoutineListItem[]> {
   const { rows } = await db.query<RoutineQueryRow>(`
     SELECT latest.id, latest.department_id, latest.department_code, latest.department_name,
-           latest.title, latest.version_label, latest.effective_from, latest.prepared_by,
+           latest.title, latest.version_label, latest.effective_from::text AS effective_from, latest.prepared_by,
            latest.source_pdf_url, latest.parsed_at::text AS parsed_at, latest.is_current
     FROM (
       SELECT DISTINCT ON (r.department_id)
