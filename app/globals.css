@@ -186,6 +186,20 @@ button, a, input, select { -webkit-tap-highlight-color: transparent; }
 .routine-search-form input, .routine-search-form select, .sync-key-row input { @apply h-11 min-w-0 rounded-xl border px-3 text-sm outline-none transition; border-color: var(--border); background: var(--background); color: var(--foreground); }
 .routine-search-form input:focus, .routine-search-form select:focus, .sync-key-row input:focus { border-color: var(--accent-strong); }
 .routine-search-form .button { @apply w-full sm:w-auto; }
+.classroom-search { @apply grid gap-6 md:grid-cols-[.7fr_1.3fr] md:items-center; }
+.classroom-search-form { @apply grid gap-3 sm:grid-cols-[1fr_1.2fr_auto] sm:items-end; }
+.classroom-search-form label { @apply flex flex-col gap-2 text-[11px] font-semibold; color: var(--muted); }
+.classroom-search-form input, .classroom-search-form select { @apply h-11 min-w-0 rounded-xl border px-3 text-sm outline-none transition; border-color: var(--border); background: var(--background); color: var(--foreground); }
+.classroom-search-form input:focus, .classroom-search-form select:focus { border-color: var(--accent-strong); }
+.classroom-search-form .button { @apply w-full sm:w-auto; }
+.classroom-search-note { @apply text-[10px] leading-5 md:col-start-2; color: var(--muted); }
+.classroom-results { @apply mt-10 pb-14; }
+.classroom-room-grid { @apply grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4; }
+.classroom-room-card { @apply flex min-h-32 flex-col items-start justify-center gap-2 rounded-2xl border p-5; border-color: var(--border); background: var(--surface); }
+.classroom-room-card > span { @apply grid h-9 w-9 place-items-center rounded-xl text-lg; background: rgba(130, 221, 169, .12); color: var(--accent-strong); }
+.classroom-room-card b { @apply text-lg font-semibold; }
+.classroom-room-card small { @apply text-[11px]; color: var(--muted); }
+.classroom-coverage-note { @apply mt-4 text-[11px] leading-5; color: var(--muted); }
 .saved-sections { @apply mt-5 border-t pt-4; border-color: var(--border); }
 .saved-sections-heading { @apply flex flex-wrap items-center justify-between gap-3; }
 .saved-sections-heading > div { @apply flex flex-col gap-1; }
@@ -310,6 +324,7 @@ button, a, input, select { -webkit-tap-highlight-color: transparent; }
   .hero-routine-search .button { @apply w-full; }
   .overview-departments { @apply ml-0; }
   .routine-search-form { @apply grid-cols-1; }
+  .classroom-search-form { @apply grid-cols-1; }
   .routine-manage-filter select, .routine-manage-filter .button { @apply w-full; }
   .notice-filter form { @apply grid-cols-1; }
   .notice-filter .button { @apply w-full; }

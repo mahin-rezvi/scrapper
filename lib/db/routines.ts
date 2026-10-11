@@ -31,6 +31,112 @@ export type RoutineDay = {
   rows: RoutineCell[][];
 };
 
+export type ClassroomSlotOption = { value: string; label: string };
+export type ClassroomAvailability = {
+  date: string;
+  dayName: string;
+  slots: ClassroomSlotOption[];
+  selectedSlot: string;
+  selectedSlotLabel: string | null;
+  availableRooms: string[];
+  occupiedRoomCount: number;
+  searched: boolean;
+};
+
+const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+function dhakaToday() {
+  const parts = new Intl.DateTimeFormat("en", {
+    timeZone: "Asia/Dhaka",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const part = (type: string) => parts.find((item) => item.type === type)?.value ?? "";
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
+
+function isValidCalendarDate(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = new Date(`${value}T12:00:00.000Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
+
+function routineSelectionCte() {
+  return `
+    WITH latest_routines AS (
+      SELECT DISTINCT ON (r.department_id) r.id
+      FROM public.routine_versions AS r
+      JOIN public.departments AS d ON d.id = r.department_id
+      WHERE d.is_active
+        AND concat_ws(' ', r.title, r.parsed_data->>'title') ~* '\\m(routine|class[[:space:]]+(time[[:space:]]*table|schedule))\\M'
+        AND concat_ws(' ', r.title, r.parsed_data->>'title') !~* '\\m(exam(ination)?s?|mid[[:space:]-]?term|quiz(zes)?)\\M'
+      ORDER BY r.department_id, r.is_current DESC, r.parsed_at DESC, r.id DESC
+    )`;
+}
+
+export async function classroomAvailabilityData(dateInput?: string, slotInput?: string): Promise<ClassroomAvailability> {
+  const date = dateInput && isValidCalendarDate(dateInput) ? dateInput : dhakaToday();
+  const dayName = WEEKDAYS[new Date(`${date}T12:00:00.000Z`).getUTCDay()];
+  const slotResult = await db.query<{ start_time: string; end_time: string; label: string }>(`
+    ${routineSelectionCte()}
+    SELECT DISTINCT to_char(s.start_time, 'HH24:MI') AS start_time,
+           to_char(s.end_time, 'HH24:MI') AS end_time,
+           min(s.time_label) AS label
+    FROM latest_routines AS lr
+    JOIN public.routine_days AS d ON d.routine_id = lr.id AND lower(trim(d.day_name)) = lower($1)
+    JOIN public.routine_time_slots AS s ON s.routine_id = d.routine_id AND s.day_index = d.day_index
+    WHERE s.start_time IS NOT NULL AND s.end_time IS NOT NULL AND s.end_time > s.start_time
+    GROUP BY s.start_time, s.end_time
+    ORDER BY s.start_time, s.end_time
+  `, [dayName]);
+
+  const slots = slotResult.rows.map((slot) => ({
+    value: `${slot.start_time}-${slot.end_time}`,
+    label: slot.label || `${slot.start_time}–${slot.end_time}`,
+  }));
+  const selectedSlot = slotInput ?? "";
+  const selected = slotResult.rows.find((slot) => `${slot.start_time}-${slot.end_time}` === selectedSlot);
+  if (!selected) {
+    return {
+      date, dayName, slots, selectedSlot: "", selectedSlotLabel: null,
+      availableRooms: [], occupiedRoomCount: 0, searched: false,
+    };
+  }
+
+  const roomResult = await db.query<{ room: string; occupied: boolean }>(`
+    ${routineSelectionCte()},
+    room_inventory AS (
+      SELECT DISTINCT upper(trim(e.room)) AS room
+      FROM latest_routines AS lr
+      JOIN public.routine_entries AS e ON e.routine_id = lr.id
+      WHERE trim(e.room) <> ''
+    ),
+    occupied_rooms AS (
+      SELECT DISTINCT upper(trim(e.room)) AS room
+      FROM latest_routines AS lr
+      JOIN public.routine_days AS d ON d.routine_id = lr.id AND lower(trim(d.day_name)) = lower($1)
+      JOIN public.routine_entries AS e ON e.routine_id = d.routine_id AND e.day_index = d.day_index
+      JOIN public.routine_time_slots AS s ON s.routine_id = e.routine_id
+        AND s.day_index = e.day_index AND s.slot_index = e.slot_index
+      WHERE trim(e.room) <> '' AND trim(e.course) <> ''
+        AND s.start_time < $3::time AND s.end_time > $2::time
+    )
+    SELECT inventory.room, (occupied.room IS NOT NULL) AS occupied
+    FROM room_inventory AS inventory
+    LEFT JOIN occupied_rooms AS occupied USING (room)
+    ORDER BY inventory.room
+  `, [dayName, selected.start_time, selected.end_time]);
+  const availableRooms = roomResult.rows.filter((room) => !room.occupied).map((room) => room.room);
+  return {
+    date, dayName, slots, selectedSlot,
+    selectedSlotLabel: selected.label || `${selected.start_time}–${selected.end_time}`,
+    availableRooms,
+    occupiedRoomCount: roomResult.rows.length - availableRooms.length,
+    searched: true,
+  };
+}
+
 type RoutineQueryRow = {
   id: string;
   department_id: string;

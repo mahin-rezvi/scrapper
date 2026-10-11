@@ -11,6 +11,7 @@ export default function SiteHeader() {
       <nav className="site-links" aria-label="Primary navigation">
         <Link href="/dashboard">Notices</Link>
         <Link href="/routine">Class routine</Link>
+        <Link href="/classrooms">Classrooms</Link>
         {/* <Link href="/routine/manage">Manage routines</Link> */}
       </nav>
       <ThemeToggle />
