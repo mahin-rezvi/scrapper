@@ -5,7 +5,13 @@ import { DEPARTMENTS, noticeListUrl } from "@/lib/scraper/departments";
 import { sleep } from "@/lib/utils/rateLimit";
 import { logger } from "@/lib/utils/logger";
 
-type DepartmentRow = { id: string; code: string; name: string };
+type DepartmentRow = {
+  id: string;
+  code: string;
+  name: string;
+  notice_backfill_page: number;
+  notice_backfill_complete: boolean;
+};
 type DepartmentSyncResult = { department: string; added: number; refreshed: number; errors: number };
 
 export type NoticeSyncResult = {
@@ -24,6 +30,8 @@ const maxNoticePages = Math.max(
   1,
   Number.parseInt(process.env.NOTICE_SYNC_MAX_PAGES ?? "5", 10) || 5
 );
+const maxFullBackfillPages = 1000;
+const detailFetchConcurrency = 3;
 
 async function ensureDepartments(): Promise<DepartmentRow[]> {
   const departments = DEPARTMENTS.map((department) => ({
@@ -39,7 +47,7 @@ async function ensureDepartments(): Promise<DepartmentRow[]> {
       source_url = EXCLUDED.source_url,
       is_active = true,
       updated_at = now()
-    RETURNING id, code, name
+    RETURNING id, code, name, notice_backfill_page, notice_backfill_complete
   `, [JSON.stringify(departments)]);
   return rows;
 }
@@ -110,7 +118,10 @@ async function storeNewNotice(
   ]);
 }
 
-async function syncDepartment(department: DepartmentRow): Promise<DepartmentSyncResult> {
+async function syncDepartment(
+  department: DepartmentRow,
+  fullBackfill: boolean
+): Promise<DepartmentSyncResult> {
   const result: DepartmentSyncResult = {
     department: department.code,
     added: 0,
@@ -125,25 +136,75 @@ async function syncDepartment(department: DepartmentRow): Promise<DepartmentSync
     maxPages: knownIds.size === 0 ? 1 : maxNoticePages,
   });
 
-  for (const item of listItems) {
-    try {
-      if (knownIds.has(item.sourceId)) {
-        await refreshKnownNotice(department.id, item);
-        result.refreshed += 1;
-      } else {
-        await storeNewNotice(department, item);
-        result.added += 1;
+  const processItems = async (items: NoticeListItem[]) => {
+    let pageErrors = 0;
+    let nextIndex = 0;
+    const worker = async () => {
+      while (nextIndex < items.length) {
+        const item = items[nextIndex];
+        nextIndex += 1;
+        try {
+          if (knownIds.has(item.sourceId)) {
+            await refreshKnownNotice(department.id, item);
+            result.refreshed += 1;
+          } else {
+            await storeNewNotice(department, item);
+            result.added += 1;
+          }
+          knownIds.add(item.sourceId);
+        } catch (error) {
+          result.errors += 1;
+          pageErrors += 1;
+          logger.error(`[sync] ${department.code}/${item.sourceId} failed: ${String(error)}`);
+        }
+        if (requestDelayMs > 0) await sleep(requestDelayMs);
       }
-    } catch (error) {
-      result.errors += 1;
-      logger.error(`[sync] ${department.code}/${item.sourceId} failed: ${String(error)}`);
+    };
+    await Promise.all(Array.from(
+      { length: Math.min(detailFetchConcurrency, items.length) },
+      () => worker()
+    ));
+    return pageErrors;
+  };
+
+  await processItems(listItems);
+
+  // Poll the newest pages every run, then backfill one older page per department.
+  // Persisting this cursor prevents a first-page-only seed from being mistaken for a full archive.
+  let backfillComplete = department.notice_backfill_complete;
+  let page = department.notice_backfill_page;
+  let pagesBackfilled = 0;
+  while (!backfillComplete && pagesBackfilled < maxFullBackfillPages) {
+    const historicalItems = await fetchNoticeList(department.code, {
+      maxPages: 1,
+      startPage: page,
+    });
+    const pageErrors = await processItems(historicalItems);
+    if (pageErrors === 0) {
+      const reachedEnd = historicalItems.length < 20;
+      await db.query(`
+        UPDATE public.departments
+        SET notice_backfill_page = $2,
+            notice_backfill_complete = $3,
+            updated_at = now()
+        WHERE id = $1
+      `, [department.id, page + 1, reachedEnd]);
+      page += 1;
+      pagesBackfilled += 1;
+      backfillComplete = reachedEnd;
+    } else {
+      break;
     }
-    if (requestDelayMs > 0) await sleep(requestDelayMs);
+
+    if (!fullBackfill) break;
+  }
+  if (!backfillComplete && pagesBackfilled === maxFullBackfillPages) {
+    logger.warn(`[sync] ${department.code}: stopped full backfill at safety limit (${maxFullBackfillPages} pages)`);
   }
   return result;
 }
 
-export async function syncNotices(): Promise<NoticeSyncResult> {
+export async function syncNotices(options: { fullBackfill?: boolean } = {}): Promise<NoticeSyncResult> {
   const { rows: runRows } = await db.query<{ id: string }>(`
     INSERT INTO public.sync_runs (kind, status)
     VALUES ('notices', 'running')
@@ -156,7 +217,7 @@ export async function syncNotices(): Promise<NoticeSyncResult> {
     const results: DepartmentSyncResult[] = [];
     for (const department of departments) {
       try {
-        results.push(await syncDepartment(department));
+        results.push(await syncDepartment(department, options.fullBackfill ?? false));
       } catch (error) {
         logger.error(`[sync] ${department.code} failed: ${String(error)}`);
         results.push({ department: department.code, added: 0, refreshed: 0, errors: 1 });

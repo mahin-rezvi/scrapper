@@ -85,6 +85,8 @@ button, a, input, select { -webkit-tap-highlight-color: transparent; }
 .home-card-top > div > span, .home-card-tool small { @apply text-[10px] text-white/45; }
 .home-card-status { @apply inline-flex items-center gap-1.5 rounded-full border border-white/10 px-2.5 py-1 text-[9px] font-semibold text-emerald-200; }
 .home-card-status i { @apply h-1.5 w-1.5 rounded-full bg-emerald-300; }
+.home-card-status-unavailable { color: #fecaca; }
+.home-card-status-unavailable i { background: #fca5a5; }
 .home-card-tool { @apply flex items-center gap-3 border-b border-white/[.06] py-4 no-underline transition; }
 .home-card-tool:hover { @apply translate-x-1; }
 .home-card-tool > span:last-child { @apply text-emerald-200; }

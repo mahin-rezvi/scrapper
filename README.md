@@ -6,7 +6,7 @@ DIUBoard brings DIU department notices and class routines into one searchable da
 
 - Searchable and filterable notices from DIU's 31 academic department boards plus the ICT in Education, DSC Hall, and Registrar boards.
 - Cursor-paginated notice results, direct source/attachment links, and a live overview backed by database totals.
-- Five-minute incremental notice polling, duplicate-safe updates, and sync status history.
+- Five-minute incremental notice polling, duplicate-safe updates, gradual archive backfill, and sync status history.
 - Routine PDF discovery and parsing after each notice poll, only when a department's latest notice is a class routine.
 - PDF.js extraction that maps routine text by page coordinates into day, time-slot, row, room, course, and teacher cells, with Gemini vision fallback for scanned PDFs or unsupported table layouts.
 - Department-aware timetable search by section (including codes such as `64_I`), teacher, course, or room, plus a tabular routine view that mirrors the source PDF.
@@ -37,7 +37,7 @@ DIUBoard brings DIU department notices and class routines into one searchable da
    npm run db:migrate
    ```
 
-4. Seed all tracked DIU boards and run the initial notice and routine sync:
+4. Seed all tracked DIU boards and run the initial notice and routine sync. The scraper adds older pages gradually on later scheduled runs:
 
    ```bash
    npm run sync:run
@@ -55,7 +55,7 @@ For Vercel and GitHub Actions, set `DIU_DATABASE_URL` to the pooled `diuboard_ap
 
 ## Routine updates
 
-The scheduled GitHub Actions workflow polls DIU boards every five minutes and parses a routine only when that department's latest stored notice is a class routine. It does not fall back to an older routine notice when the latest notice is unrelated, and a department whose notice poll failed is skipped for that run. Open routine pages refresh from Neon every five minutes while visible. DIU does not provide a notice webhook, so this is near-real-time polling rather than a push-based real-time feed.
+The scheduled GitHub Actions workflow polls DIU boards every five minutes and backfills one older notice page per department on each run. The dashboard and open routine pages refresh from Neon every five minutes while visible. DIU does not provide a notice webhook, so this is near-real-time polling rather than a push-based real-time feed. Routine parsing runs only when a department's latest stored notice is a class routine; a failed notice poll skips routine parsing for that department.
 
 Apply schema migrations separately when the schema changes; scheduled polling never runs DDL. Configure the database role secret below after running `npm run db:migrate` once for the target database. Add these GitHub repository secrets:
 
@@ -75,6 +75,7 @@ Notice search uses PostgreSQL full-text search with a matching GIN index and key
 - `npm run test:routines` — run routine search and notice-classification regression tests.
 - `npm run db:migrate` — apply pending SQL migrations with the direct Neon connection.
 - `npm run sync:run` — sync notices and check routine PDFs.
+- `npm run notices:backfill` — fetch the full available notice archive from every tracked department board into Neon.
 - `npm run scrape:dry` — inspect the notice scraper output locally.
 
 ## Database

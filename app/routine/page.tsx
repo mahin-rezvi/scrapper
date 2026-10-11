@@ -77,7 +77,7 @@ export default async function RoutinePage({
         {error ? (
           <section className="empty-panel"><span className="empty-icon">!</span><h2>Routine data is unavailable</h2><p>Please try again once the database connection is restored.</p></section>
         ) : !board?.selectedRoutine ? (
-          <section className="empty-panel"><span className="empty-icon">◷</span><h2>No routine has been imported yet</h2><p>Department boards are checked every ten hours; a timetable is imported only when the department&apos;s latest notice is a class routine.</p><Link href="/routine/manage" className="text-link">View routine updates <span aria-hidden="true">→</span></Link></section>
+          <section className="empty-panel"><span className="empty-icon">◷</span><h2>No routine has been imported yet</h2><p>Department boards are checked every five minutes; a timetable is imported only when the department&apos;s latest notice is a class routine.</p><Link href="/routine/manage" className="text-link">View routine updates <span aria-hidden="true">→</span></Link></section>
         ) : (
           <>
             {board.section ? (

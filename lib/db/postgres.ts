@@ -1,5 +1,6 @@
 import "server-only";
 import { neon } from "@neondatabase/serverless";
+import { Agent } from "undici";
 
 type DatabaseRow = Record<string, unknown>;
 
@@ -11,7 +12,10 @@ function getConnectionString() {
   return connectionString;
 }
 
-const sql = neon(getConnectionString());
+const sql = neon(getConnectionString(), {
+  // Some Node runtimes prefer unreachable IPv6 routes even when IPv4 is available.
+  fetchOptions: { dispatcher: new Agent({ connect: { family: 4 } }) },
+});
 
 export const db = {
   async query<Row extends DatabaseRow = DatabaseRow>(

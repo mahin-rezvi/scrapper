@@ -83,7 +83,7 @@ export default async function HomePage() {
               <div className="home-card-top">
                 <span className="home-card-logo">D</span>
                 <div><b>Your campus dashboard</b><span>Schedules and notices, together</span></div>
-                <span className="home-card-status"><i /> Ready</span>
+                <span className={`home-card-status${overview ? "" : " home-card-status-unavailable"}`}><i />{overview ? "Live data" : "Data unavailable"}</span>
               </div>
               <Link href="/routine" className="home-card-tool">
                 <span className="home-tool-icon">◷</span>

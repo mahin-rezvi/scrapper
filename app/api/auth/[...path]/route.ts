@@ -11,7 +11,6 @@ export const DELETE = handlers.DELETE;
 export const PATCH = handlers.PATCH;
 
 export async function POST(request: Request, context: AuthRouteContext) {
-  const { path } = await context.params;
   const body = await request.clone().json().catch(() => null) as { email?: unknown } | null;
   if (body && typeof body.email === "string" && !isRoutineAdmin(body.email)) {
     return NextResponse.json({ error: "This account is not permitted to sign in." }, { status: 403 });

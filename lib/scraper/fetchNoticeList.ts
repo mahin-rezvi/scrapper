@@ -102,13 +102,15 @@ export async function fetchNoticeList(
     knownSourceIds?: ReadonlySet<number>;
     stopAtKnownPage?: boolean;
     maxPages?: number;
+    startPage?: number;
   } = {}
 ): Promise<NoticeListItem[]> {
   const seenIds = new Set<number>();
   const items: NoticeListItem[] = [];
 
   const maxPages = Math.max(1, Math.min(options.maxPages ?? MAX_NOTICE_LIST_PAGES, MAX_NOTICE_LIST_PAGES));
-  for (let page = 1; page <= maxPages; page += 1) {
+  const startPage = Math.max(1, Math.floor(options.startPage ?? 1));
+  for (let page = startPage; page < startPage + maxPages; page += 1) {
     const url = buildNoticeListUrl(code, page);
     const html = await fetchPageHtml(url);
     const $ = cheerio.load(html);

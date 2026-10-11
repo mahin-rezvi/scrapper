@@ -13,7 +13,8 @@
     "test:routines": "node --conditions=react-server --import tsx --test tests/routines/*.test.ts",
     "db:migrate": "tsx scripts/migrateDatabase.ts",
     "scrape:dry": "tsx scripts/dryRun.ts",
-    "sync:run": "node --conditions=react-server --import tsx scripts/runSync.ts"
+    "sync:run": "node --conditions=react-server --import tsx scripts/runSync.ts",
+    "notices:backfill": "node --conditions=react-server --import tsx scripts/backfillNotices.ts"
   },
   "dependencies": {
     "@google/genai": "^2.10.0",
@@ -30,6 +31,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "server-only": "^0.0.1",
+    "undici": "^7.30.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

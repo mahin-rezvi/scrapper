@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import SiteHeader from "@/app/components/SiteHeader";
+import DashboardAutoRefresh from "@/app/dashboard/DashboardAutoRefresh";
 import { dashboardData, type NoticeSummary } from "@/lib/db/notices";
 
 export const metadata: Metadata = {
@@ -73,6 +74,7 @@ export default async function DashboardPage({
   return (
     <main className="product-page dashboard-page">
       <div className="product-wrap">
+        <DashboardAutoRefresh />
         <SiteHeader />
         <section className="page-heading dashboard-heading">
           <div><span className="eyebrow">The DIU notice board, gathered</span><h1>Campus updates</h1><p>Search official notices by topic, department, or category.</p></div>
