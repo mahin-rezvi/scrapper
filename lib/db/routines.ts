@@ -80,7 +80,7 @@ export async function classroomAvailabilityData(dateInput?: string, slotInput?: 
   const dayName = WEEKDAYS[new Date(`${date}T12:00:00.000Z`).getUTCDay()];
   const slotResult = await db.query<{ start_time: string; end_time: string; label: string }>(`
     ${routineSelectionCte()}
-    SELECT DISTINCT to_char(s.start_time, 'HH24:MI') AS start_time,
+    SELECT to_char(s.start_time, 'HH24:MI') AS start_time,
            to_char(s.end_time, 'HH24:MI') AS end_time,
            min(s.time_label) AS label
     FROM latest_routines AS lr

@@ -46,12 +46,12 @@ export default async function ClassroomsPage({
             </label>
             <label>
               <span>Time slot</span>
-              <select name="slot" defaultValue={data?.selectedSlot ?? ""} required disabled={!data?.slots.length}>
-                <option value="" disabled>{data?.slots.length ? "Select a time slot" : "No slots for this day"}</option>
+              <select name="slot" defaultValue={data?.selectedSlot ?? ""} required disabled={error || !data?.slots.length}>
+                <option value="" disabled>{error ? "Database unavailable" : data?.slots.length ? "Select a time slot" : "No slots for this day"}</option>
                 {(data?.slots ?? []).map((slot) => <option value={slot.value} key={slot.value}>{slot.label}</option>)}
               </select>
             </label>
-            <button type="submit" className="button button-primary">Find empty rooms <span aria-hidden="true">→</span></button>
+            <button type="submit" className="button button-primary" disabled={error}>Find empty rooms <span aria-hidden="true">→</span></button>
           </form>
           <p className="classroom-search-note">Class routines repeat weekly, so the date selects its weekday.</p>
         </section>
